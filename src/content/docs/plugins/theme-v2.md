@@ -19,7 +19,8 @@ so they stay readable at any width.
 - **A client-panel sidebar.** Pelican's client panel has no navigation; the theme adds a flat one:
   Home (the server list, with the number of servers you own), the Resource Store, plugged.host
   Plus and Tokens (each only when the [economy](/plugins/economy/) page exists and you may open
-  it), Backups (the backups portal, see Settings), Profile Settings, and Admin Panel for admins.
+  it), Backups (the [storage](/plugins/storage/) plugin's backups portal, only while that plugin
+  is enabled), Profile Settings, and Admin Panel for admins.
 - **Usage and balance.** At the foot of the sidebar on the client and server panels: how much of
   the account's plan its servers use, the token balance and the credit balance. Each links to the
   page where it is topped up, and they refresh every minute. Needs
@@ -40,8 +41,9 @@ so they stay readable at any width.
 
 ## Requirements
 
-- [plugged-host-core](/plugins/core/). Works with [plugged-host-economy](/plugins/economy/)
-  (optional): the store, Plus and Tokens rows and the balance block.
+- [plugged-host-core](/plugins/core/).
+- Optional: [plugged-host-economy](/plugins/economy/) for the store, Plus and Tokens rows and the
+  balance block; [plugged-host-storage](/plugins/storage/) for the Backups row.
 - The panel's assets rebuilt after installing or updating the plugins: the theme's stylesheet is
   compiled by Pelican's Vite build (see [Install the plugins](/panel/plugins/#rebuild-the-assets)).
 - Browsers load the two fonts from Google Fonts (`fonts.googleapis.com`, `fonts.gstatic.com`).
@@ -59,18 +61,13 @@ Admin › Plugins › plugged.host Theme v2 › Settings.
 |---|---|---|
 | Accent (`THEME_V2_ACCENT`) | `blue` | The accent colour: `blue`, `indigo`, `violet`, `purple`, `fuchsia`, `pink`, `rose`, `red`, `orange`, `amber`, `yellow`, `lime`, `green`, `emerald`, `teal`, `cyan`, `sky`, or a custom `#rrggbb` or `#rgb` (choose "Custom colour" in the form). Anything else falls back to blue. |
 
-### Only in `.env`
-
-| Setting | Default | What it does |
-|---|---|---|
-| `BACKUPS_PORTAL_URL` | `https://backups.plugged.host` | Where the client sidebar's Backups row points. The [storage](/plugins/storage/) plugin reads the same key for its portal links. |
-
 ## Notes
 
-- **Set `BACKUPS_PORTAL_URL`.** The Backups row is always in the client sidebar, with or without
-  the storage plugin, and its default is plugged.host's own portal. Point it at your backups portal
-  (with plugged-host-storage, the portal on its own host name, or `https://panel.example.com/backups`
-  on the panel). Core's sidebar visibility setting can't hide this row.
+- **The Backups row follows the storage plugin.** It appears only while plugged-host-storage is
+  enabled, and opens its backups portal: the storage plugin's **Portal address**
+  (`BACKUPS_PORTAL_URL`) when set, else `/backups` on the panel. See
+  [Backups portal](/plugins/storage/#backups-portal). Core's sidebar visibility setting
+  (`NAV_HIDDEN_ITEMS`) can't hide this row, nor any other row of the client sidebar.
 - **Rebuild after every Pelican upgrade.** An upgrade replaces `public/build`, and the theme's
   stylesheet with it; the panel's pages fail until you run the build again.
 - **No light mode.** There is none to switch to. Turning the theme off gives Pelican's default

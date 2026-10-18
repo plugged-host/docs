@@ -46,13 +46,21 @@ Add `--help` to any command for its arguments.
 |---|---|---|
 | `plugged-host:credits-reset` `--dry-run` `--force` | Zero every credit balance and Discord invite counter, keeping purchased resources and the transaction history. |  |
 
+## Minecraft
+
+[Minecraft plugin](/plugins/minecraft/)
+
+| Command | What it does | Scheduled |
+|---|---|---|
+| `plugged-host:minecraft-setup` `--update` `--dry-run` | Import the Minecraft: Java Edition egg this plugin ships (with --update, over the existing one). |  |
+
 ## FiveM
 
 [FiveM plugin](/plugins/fivem/)
 
 | Command | What it does | Scheduled |
 |---|---|---|
-| `plugged-host:fivem-setup` `--servers` `--dry-run` | Put the cfx eggs (and with --servers, every FiveM server) on the plugged.host FiveM image. |  |
+| `plugged-host:fivem-setup` `--servers` `--dry-run` | Put the cfx eggs (and with --servers, every FiveM server) on the FiveM image. |  |
 
 ## Devbox
 

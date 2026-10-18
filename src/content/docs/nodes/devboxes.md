@@ -100,7 +100,8 @@ sudo systemctl status wings --no-pager
 ```
 
 When a node lacks this, Wings silently skips the mount, the devbox reports that `/server` is
-missing, the card says "Can't reach the server's files", and the doctor names the node.
+missing, the card says "Can't reach the server's files", and the doctor names the node with the
+directory to add (its Daemon Base Directory).
 
 ### Add the node firewall
 
@@ -116,8 +117,10 @@ Do not put these rules in `/etc/nftables.conf` with `nftables.service`. Debian's
 :::
 
 Read the bridge name and subnets from `docker.network` in the node's `/etc/pelican/config.yml`
-(Wings' defaults are shown) and the node's allocation port range or ranges from Admin › Nodes ›
-the node › Allocations:
+(Wings' defaults are shown), the node's allocation port range or ranges from Admin › Nodes › the
+node › Allocations, and its Wings port from Admin › Nodes › the node: the **Port**, or the
+**Connection Port** when the node lists a Connection and a Listening Port (the port `ph`'s
+websocket reaches Wings on):
 
 ```bash
 sudo install -d /etc/nftables.d
@@ -129,6 +132,7 @@ define WINGS_BRIDGE = "pelican0"             # Wings' bridge interface
 define WINGS_V4 = 172.18.0.0/16              # docker.network.interfaces.v4.subnet
 define WINGS_V6 = fdba:17c8:6c94::/64        # docker.network.interfaces.v6.subnet
 define GAME_PORTS = { <FIRST_PORT>-<LAST_PORT> }   # the node's allocation range(s)
+define WINGS_API_PORT = 8080                 # the node's (Connection) Port in the panel
 
 table inet ph_node_guard
 delete table inet ph_node_guard
@@ -149,8 +153,10 @@ table inet ph_node_guard {
     }
 
     # Containers to this host (the bridge's gateway or any of its addresses): only the game
-    # ports (servers on a 127.0.0.1 allocation are reached at the gateway) and ICMP. Nothing
-    # else: not SSH, the Wings API, Wings' SFTP, a database, Redis or metrics.
+    # ports (servers on a 127.0.0.1 allocation are reached at the gateway), Wings' API and
+    # ICMP. Nothing else: not SSH, Wings' SFTP, a database, Redis or metrics.
+    # Wings' API: a devbox's ph logs, ph cmd and ph console open Wings' websocket at the node's
+    # address, which is this host. It is open to the internet anyway, and needs a token.
     chain input {
         type filter hook input priority -10; policy accept;
         iifname != $WINGS_BRIDGE return
@@ -158,6 +164,7 @@ table inet ph_node_guard {
         meta l4proto { icmp, ipv6-icmp } return
         tcp dport $GAME_PORTS return
         udp dport $GAME_PORTS return
+        tcp dport $WINGS_API_PORT return
         counter drop
     }
 }
@@ -197,12 +204,11 @@ Add exceptions before loading the table where a node needs them:
 - **Something containers need sits in a private network** (a database in your provider's private
   network, or a panel that devboxes reach at a private address through `DEVBOX_PANEL_URL`): add a
   `return` for that address before the `drop` in `forward`.
-- **`ph logs`, `ph cmd` and `ph console`** read the game server's console straight from Wings'
-  API at the node's address, which `input` blocks for containers on the same node. To keep those
-  commands working in devboxes, add `tcp dport <WINGS_API_PORT> return` to `input`. Wings' API is
-  reachable from the internet anyway and every call needs a token, but it is one more port on the
-  host open to containers, so decide per node. `ph status` and the power commands go through the
-  panel and are not affected.
+
+The `tcp dport $WINGS_API_PORT return` line is there for devboxes: `ph logs`, `ph cmd` and
+`ph console` read the game server's console straight from Wings' API at the node's address. On a
+node that never runs devboxes you can leave it out; `ph status` and the power commands go through
+the panel and do not need it.
 
 Servers whose egg forces an outgoing IP run on Wings' per-address Docker networks, not on the
 Wings bridge, and are not covered. The devbox egg never does that.
@@ -253,8 +259,9 @@ own firewall, as it already is for game servers.
    timeout 5 bash -c '</dev/tcp/172.18.0.1/<SSH_PORT>'       # fails (the node's SSH, at the gateway)
    ```
 
-   The same for Wings' SFTP port fails, and a game server on the node is still reachable from
-   outside. `sudo nft list table inet ph_node_guard` on the node shows the counters going up.
+   The same for Wings' SFTP port fails. `ph logs -n 5` prints the game server's last console
+   lines (Wings' API passes), and a game server on the node is still reachable from outside.
+   `sudo nft list table inet ph_node_guard` on the node shows the counters going up.
 4. Stop the devbox from the card. It shows "Stopping…" until Wings confirms it.
 
 ## VS Code in the browser
@@ -273,7 +280,9 @@ What you need:
   proxied A record per devbox through Cloudflare's API, and Cloudflare's free edge certificate
   covers only one level (`*.example.net`), so use the zone itself, not a subdomain of it.
 - **Never a domain your panel's session cookie reaches.** Anything a devbox serves would receive
-  that cookie.
+  that cookie. The panel refuses its own registrable domain (from `APP_URL`: `example.com` for
+  `panel.example.com`), `SESSION_DOMAIN` when it is set, and any name under or above either, in
+  the settings and in `plugged-host:devbox-web-setup`.
 - **A Cloudflare API token** with Zone › DNS › Edit on that zone. When the subdomains plugin is
   enabled, the panel uses that plugin's token instead, so give that token access to this zone too.
 - **The panel box's public IPv4**, which every devbox record points at.

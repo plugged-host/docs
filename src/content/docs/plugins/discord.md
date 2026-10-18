@@ -41,11 +41,13 @@ supervisor, the Discord account lookups and the credit payouts all come from her
   once a server ID is set: credits earned on Discord, invites paid, waiting (with the next payout
   time), left, too new and owed back, both boost levels, the rules, a **Check for new rewards**
   button (once a minute per user) and the reward history. Without a linked Discord it shows a
-  **Link Discord** button.
+  **Link Discord** button. The **Join the Discord server** buttons only show while
+  `DISCORD_INVITE_URL` is set. The tab's texts name the panel (`APP_NAME`).
 - **Discord servers tab**: the Discord servers to join for more resources. It only exists with
   [plugged-host-noprofit](/plugins/noprofit/); standalone it is hidden.
 - **Admin users table**: a Discord column (username, ID on hover, searchable).
-- **Slash commands**, registered on your server:
+- **Slash commands**, registered on your server. Their replies are embeds whose footer starts
+  with the panel's name (`APP_NAME`):
   - `/invites [user]`: counted invites, pending rewards and credits, for you or another member.
   - `/topinvites [limit]`: the invite leaderboard (10 by default, at most 25).
   - `/setboost user count`: set a member's boost count (0, 1 or 2) and pay the reward. Only
@@ -97,7 +99,7 @@ Members Intent check) and what the gateway daemon is doing.
 | Setting | Default | What it does |
 | --- | --- | --- |
 | Discord Server (Guild) ID `DISCORD_GUILD_ID` | empty | Your Discord server's ID. Nothing is checked and the rewards tab is hidden until it is set. |
-| Discord Server Invite URL `DISCORD_INVITE_URL` | `https://discord.gg/plugged-host-1502647500295635085` | The invite shown to users who linked Discord but are not in the server. neo also uses it as its support link. The default is plugged.host's own server: set yours. |
+| Discord Server Invite URL `DISCORD_INVITE_URL` | empty | The invite shown to users who linked Discord but are not in the server. neo also uses it as its support link, and rux treats it as your own link. Empty: no invite link or button is shown anywhere. |
 | Discord Bot Token `DISCORD_BOT_TOKEN` | empty | The bot's token. Needed for joins, invites, boosts, slash commands and the bot-side membership check. |
 | Discord Public Key `DISCORD_PUBLIC_KEY` | empty | Only for HTTP interactions: verifies Discord's signature on `/api/discord/interactions`. |
 
@@ -134,10 +136,10 @@ These also apply to neo's and rux's daemons (plugged-host-ai uses this superviso
 | Setting | Default | What it does |
 | --- | --- | --- |
 | Automatic restarts `DISCORD_BOT_SUPERVISOR_ENABLED` | `true` | Master switch for the supervisor. Off: the scheduler starts no daemon, for all three bots. |
-| Reinstall scheduler entry automatically `DISCORD_BOT_AUTO_INSTALL_TRIGGER` | `true` | When the scheduler has not ticked for three minutes, a panel request writes the `schedule:run` line back into the panel user's crontab. |
+| Reinstall scheduler entry automatically `DISCORD_BOT_AUTO_INSTALL_TRIGGER` | `true` | When the scheduler has not ticked for three minutes and no `schedule:run` line for this panel is in the panel user's crontab, `/etc/crontab` or `/etc/cron.d`, a panel request writes the line into the panel user's crontab. |
 | Gateway Idle Timeout `DISCORD_GATEWAY_IDLE_TIMEOUT` | `90` | Seconds of silence from Discord after which the daemon reconnects (45 to 3600). |
 | Heartbeat Interval `DISCORD_BOT_HEARTBEAT_INTERVAL` | `15` | How often the running daemon records that it is alive (5 to 300 seconds). |
-| Heartbeat Timeout `DISCORD_BOT_HEARTBEAT_TIMEOUT` | `120` | Silence after which the supervisor replaces the daemon. Values under 60 are treated as 60. |
+| Heartbeat Timeout `DISCORD_BOT_HEARTBEAT_TIMEOUT` | `120` | Seconds of silence after which the supervisor replaces the daemon (60 to 3600). |
 | Maximum Restart Backoff `DISCORD_BOT_RESTART_MAX_BACKOFF` | `900` | Ceiling on the delay between failed starts (seconds). The delay doubles from 60 s and resets once a connection succeeds. |
 | Log Rotation Size `DISCORD_BOT_LOG_MAX_BYTES` | `8388608` | The daemon log is rotated to `.1` past this size. |
 | Run Daemon As User `DISCORD_BOT_RUN_AS` | `www-data` | The user the daemons and the crontab line belong to. Never root. |
@@ -168,8 +170,9 @@ holds its lock.
 - **`--stop` is sticky**: the daemon stays down until `--start`. Use it around panel upgrades.
 - **The log** is `storage/logs/discord-bot.log`, rotated at the log rotation size.
 - **The crontab line** is the only thing outside the panel directory. `discord-bot-install`
-  adds it to the panel user's crontab if no `schedule:run` line for this panel is there, and the
-  panel puts it back by itself (see the setting above). `discord-bot`, `discord-bot-supervise`
+  adds it to the panel user's crontab if no `schedule:run` line for this panel is there, in
+  `/etc/crontab` or in `/etc/cron.d`, and the panel puts it back by itself (see the setting
+  above). `discord-bot`, `discord-bot-supervise`
   and `discord-bot-install` re-run themselves as the panel user when started as root, so the line
   never lands in root's crontab and no root-owned files end up in `storage/`.
 
@@ -187,7 +190,7 @@ Run as `sudo -u www-data php artisan …` in `/var/www/pelican`.
 | `plugged-host:discord-sync [--user=] [--force]` | Check server membership and update the panel role (and rewards) for every linked user, or one user by ID or username. `--force` runs even when no server ID is set. |
 | `plugged-host:discord-register-commands [--global]` | Register `/invites`, `/topinvites` and `/setboost` on your server, or globally with `--global` (also used when no server ID is set). |
 | `plugged-host:discord-bot-supervise [--status] [--start] [--stop] [--restart] [--force]` | Without options: one supervisor tick (what the scheduler runs). `--status` shows the daemon, its heartbeat, intents, failed starts, the scheduler and the log path. `--stop` stops it and keeps it down, `--start` clears that and starts it, `--restart` does both, `--force` ignores the backoff. |
-| `plugged-host:discord-bot-install [--dry-run] [--no-start]` | Add the scheduler's crontab line for the panel user if it is missing, then start the daemon. `--dry-run` only reports. |
+| `plugged-host:discord-bot-install [--dry-run] [--no-start]` | Add the scheduler's crontab line for the panel user if no `schedule:run` line for this panel is in that crontab, `/etc/crontab` or `/etc/cron.d`, then start the daemon. `--dry-run` only reports. |
 | `plugged-host:discord-bot` | Run the gateway daemon in the foreground (debugging; Ctrl-C stops it). |
 | `plugged-host:discord-invite-maturity [--inviter=] [--dry-run]` | Pay invite rewards whose hold has passed, for everyone or one inviter (Discord user ID). |
 | `plugged-host:discord-invite-reconcile [--limit=200] [--restore] [--dry-run]` | Ask Discord whether tracked invitees are still in the server and uncount (and claw back) the ones it confirms are gone. `--restore` re-checks members marked as gone and puts back those still present. |
@@ -211,22 +214,16 @@ the two status boxes on the settings page.
 
 ## Notes
 
-:::caution
-Without plugged-host-economy enabled, invite and boost rewards are still recorded as paid, but no
-credits move, and they are not paid later. Enable economy before the bot goes live.
-:::
-
-- Change `DISCORD_INVITE_URL`: the default is plugged.host's own Discord server. Some texts on
-  the rewards tab also name "the plugged.host Discord server"; they are in the plugin's
-  `lang/<locale>/strings.php`.
+- **Rewards wait for plugged-host-economy.** Without it no credits can move, so matured invites
+  stay pending and boost levels stay unpaid. Once economy is enabled, they are paid, each once.
 - Leave **Interactions Endpoint URL** empty in the Discord Developer Portal. When it is set,
   Discord sends slash commands there instead of over the gateway.
 - `/setboost` and `plugged-host:discord-boost-set` exist because Discord does not say how many
   times a member boosted. The plugin works it out from the 2-boost role and the server's boost
   total, which is a best guess.
-- The self-repair and `discord-bot-install` only look at the panel user's own crontab. If you
-  drive the scheduler from `/etc/cron.d` or a systemd timer instead, don't run
-  `discord-bot-install`: it would add a second `schedule:run` line.
-- The settings page hint mentions noprofit.space's Discord tier. Standalone, the Discord tier is
-  the one in plugged-host-economy's settings. With plugged-host-noprofit enabled, linking,
-  membership tiers, the Discord servers tab and boost payouts come from noprofit.space instead.
+- The self-repair and `discord-bot-install` find a `schedule:run` line for this panel in the panel
+  user's crontab, `/etc/crontab` and `/etc/cron.d`, but not a systemd timer. If a timer drives
+  your scheduler, don't run `discord-bot-install`: it would add a second `schedule:run` line.
+- With plugged-host-noprofit enabled, linking, membership tiers, the Discord servers tab and boost
+  payouts come from noprofit.space instead. The settings page's texts follow: they name
+  noprofit.space with it, and the profile page and economy's Discord tier without it.

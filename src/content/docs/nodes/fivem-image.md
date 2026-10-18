@@ -135,8 +135,8 @@ The FiveM egg is any egg tagged `cfx`. Add the tag in Admin › Eggs if yours la
 
 Per egg the command:
 
-- puts the image first in the egg's Docker images, so new servers get it (the old images stay
-  selectable);
+- puts the image first in the egg's Docker images, named "`<APP_NAME>` FiveM", so new servers
+  get it (the old images stay selectable);
 - makes the image the install container, with the plugin's `egg/install.sh` as the install
   script, so installs and starts lay the build down with the same code;
 - creates or updates `FIVEM_VERSION` (default `recommended`, editable by users, also set from the
@@ -156,7 +156,8 @@ import puts the old install script and stop command back, and the doctor fails u
 ## Check
 
 1. Restart one FiveM server and watch its console: `[plugged.host] Downloading FiveM legacy
-   build …`, then `… installed`, then txAdmin as usual. The first start on the image downloads the
+   build …`, then `… installed`, then txAdmin as usual. The `[plugged.host]` prefix is the
+   image's own, whatever your panel is called. The first start on the image downloads the
    build again once (about 70 MB from Cfx), because the old egg left no record of what it
    installed. `txData`, resources and databases are not touched.
 2. On that server, Artifacts shows the installed build, Players answers while it runs, Server

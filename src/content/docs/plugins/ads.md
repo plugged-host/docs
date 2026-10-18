@@ -1,20 +1,21 @@
 ---
 title: Ads
-description: Adsterra ad units, sponsored banners, the ad-funded start room, in-game ads and the ad-block response (plugged-host-ads).
+description: Adsterra ad units, sponsored banners, the ad-funded start room, in-game ads, the maintenance-page ad and the ad-block response (plugged-host-ads).
 sidebar:
   order: 9
 ---
 
 plugged-host-ads shows advertising in the panel to pay for free servers. It renders Adsterra
 units in fixed places, shows banners you sell yourself, and can put a short ad-funded waiting
-room in front of server starts. It can also send an in-game message to Minecraft servers and ask
-visitors with an ad blocker to allow ads. The settings for earning tokens through Linkvertise
-live here too.
+room in front of server starts. It can also send an in-game message to Minecraft servers, put
+an ad on the maintenance page and ask visitors with an ad blocker to allow ads. The settings for
+earning tokens through Linkvertise live here too.
 
 ## What it does
 
-- **Adsterra units.** Adsterra is the only ad network the code supports. You paste values from
-  the snippets Adsterra gives you; nothing is fetched from Adsterra's API. Supported formats:
+- **Adsterra units.** Adsterra is the only ad network on the panel's pages (the maintenance
+  page's A-ADS unit is the one exception). You paste values from the snippets Adsterra gives you;
+  nothing is fetched from Adsterra's API. Supported formats:
   - **Banner**: a main banner plus a pool of extra banner zones. Sizes: 728x90, 468x60, 320x50,
     300x250, 160x600, 160x300.
   - **Native Banner.**
@@ -33,6 +34,8 @@ live here too.
 - **The ad-funded start room** (the "start gate"): starting a server above a size threshold lands
   the user on a short waiting page full of ads while the server boots. Off by default.
 - **In-game ads**: a `say <message>` on running Minecraft servers once per interval.
+- **Maintenance page ad**: one A-ADS unit on the page the panel shows while it is down for
+  maintenance (`php artisan down`). Off until you enter a unit ID.
 - **Ad-block response**: detects blockers and shows a notice, a modal, or a hard block. Off by
   default.
 - **Token earning settings**: the Linkvertise provider behind the [Economy](/plugins/economy/)
@@ -50,7 +53,7 @@ A user sees ads only when all of these hold:
   ([Economy](/plugins/economy/)) registers one.
 
 The same rule covers banners, sponsored banners, the start room and the ad-block detector. The
-exemptions also apply to in-game ads, where plugged.host Plus exempts the owner too. Plus owners
+exemptions also apply to in-game ads, where Plus exempts the owner too. Plus owners
 still see panel ads, refreshed at the slower Plus interval.
 
 ### Where ads appear
@@ -130,16 +133,20 @@ dismissible. **Modal**: an overlay whose "Continue anyway" button unlocks after 
 Every minute, `plugged-host:ads-in-game` sends `say <message>` to the share of servers whose turn
 it is. Each server gets the message once per interval, at its own minute. It goes to servers
 that are installed and not suspended, whose egg is tagged `minecraft` and not `proxy`, and whose
-owner has neither plugged.host Plus nor an ad exemption. Stopped servers refuse the command.
+owner has neither Plus nor an ad exemption. Stopped servers refuse the command.
+
+The message defaults to "This server is powered by" followed by your panel's name (`APP_NAME`).
+It keeps following the name until you type a different message.
 
 ### Turning ads off
 
 - **Everything:** switch **Enable Ads** off (`ADS_ENABLED=false`). That stops Adsterra units,
-  sponsored banners, the start room, the ad-block detector and in-game ads. Linkvertise earning
-  on the Tokens page is separate: switch **Enable Linkvertise** off for that.
+  sponsored banners, the start room, the ad-block detector, in-game ads and the maintenance-page
+  ad. Linkvertise earning on the Tokens page is separate: switch **Enable Linkvertise** off for
+  that.
 - **Or disable the plugin** in Admin › Plugins. No plugin requires it. The [Queue](/plugins/queue/)
   keeps holding starts, but its waiting page shows no ads, and exempt roles no longer skip the
-  queue (root admins still do). In-game ads stop.
+  queue (root admins still do). In-game ads and the maintenance-page ad stop.
 - **Only in-game ads:** switch **Send in-game ads** off. They are on by default.
 
 ## Requirements
@@ -149,6 +156,7 @@ owner has neither plugged.host Plus nor an ad exemption. Stopped servers refuse 
   exemptions, and the tables for token claims and start-room events).
 - An Adsterra publisher account with ad units created for your panel's domain.
 - For token earning: a Linkvertise publisher account with Anti-Bypass switched on.
+- For the maintenance-page ad: an a-ads.com ad unit.
 - The `plugged_host_ad_banners` table for sponsored banners (run the migrations). Until it exists
   the Sponsored banners page stays hidden.
 - The scheduler, for in-game ads. See [Queue worker and scheduler](/panel/queue-and-scheduler/).
@@ -173,45 +181,33 @@ owner has neither plugged.host Plus nor an ad exemption. Stopped servers refuse 
    - **Banner Zones**: any further banner snippets, pasted as Adsterra gives them.
    - **Native Banner Script URL** and **Native Banner Container ID**: from the Native snippet.
    - Social Bar and Popunder script URLs, if you use them.
-4. Change the in-game message (**In-game Ads** › **Message**). Its default says "This server is
-   powered by plugged.host".
-5. If you turn on the ad-block response, set **Custom Message**. The default text asks users to
-   allow ads on plugged.host's own panel.
-6. To let users earn tokens, switch **Enable the Start Gate** on in the form first (see the
-   caution below). Then, under **Tokens — Earning**, enable Linkvertise and enter your
+4. Check the in-game message (**In-game Ads** › **Message**). By default it says "This server
+   is powered by" followed by your panel's name (`APP_NAME`).
+5. The ad-block response's default text names your panel (`APP_NAME`) and asks users to allow
+   ads on your panel's host (from `APP_URL`). Set **Custom Message** only if you want other
+   wording.
+6. To let users earn tokens, open **Tokens — Earning**, enable Linkvertise and enter your
    **Linkvertise Publisher ID** and **Linkvertise API Token**. Leave the whitelist at `lvr=`.
-7. Before you turn on the start room or token earning, say so in your terms of service: the
+   Earning doesn't need the start room.
+7. Optionally, enter an A-ADS unit ID under **Maintenance Page**.
+8. Before you turn on the start room or token earning, say so in your terms of service: the
    room makes ad views a condition of starting, and earning sends users to a third-party link
    shortener.
 
 The panel's own web server config sets no `script-src` CSP, so Adsterra needs no change there.
 If you add a Content-Security-Policy to the panel, allow your Adsterra hosts.
 
-:::caution
-The Ads settings form hides some sections until a switch above them is on. When you save,
-hidden fields are reset: switches go **off** and text fields go **empty** or back to their
-defaults.
-
-- Saving with **Enable the Start Gate** off turns Linkvertise off, clears its publisher ID and
-  link, and switches every waiting-room ad (leaderboard, native, Social Bar, Popunder,
-  waiting-room zone, Direct Link) off. That also strips those units from the
-  [Queue](/plugins/queue/)'s waiting page. The API token is kept.
-- Saving with **Detect Ad Blockers** off sets **Probe Ad Hosts** and **Never on the Console** to
-  off.
-
-To keep these values, switch the parent on before saving and set the sub-switches again. Or set
-the keys in `.env` and don't save the form afterwards.
-:::
-
 ## Settings
 
 Admin › Plugins › plugged.host Ads › Settings. Every value is stored in the panel's `.env`.
+Some fields only show while a switch above them is on; a hidden field keeps its stored value
+when you save. Labels that name Plus start with your panel's name (`APP_NAME`).
 
 ### General Settings
 
 | Setting | Default | What it does |
 |---|---|---|
-| Enable Ads, `ADS_ENABLED` | `true` | Master switch for every ad surface, including in-game ads and the start room. |
+| Enable Ads, `ADS_ENABLED` | `true` | Master switch for every ad surface, including in-game ads, the start room and the maintenance-page ad. |
 
 ### Adsterra
 
@@ -261,7 +257,7 @@ dropped, so a pasting mistake gives an empty slot, never broken markup.
 |---|---|---|
 | Refresh ads, `ADS_REFRESH_ENABLED` | `true` | Reload sandboxed units after time in view. Social Bar, Popunder, sponsored banners and non-isolated units are never refreshed. |
 | Every (seconds in view), `ADS_REFRESH_SECONDS` | `5` | Interval for everyone. 5-3600. |
-| With plugged.host Plus (seconds in view), `ADS_REFRESH_PLUS_SECONDS` | `10` | Interval for Plus owners. Never faster than the one above. 5-3600. |
+| With Plus (seconds in view), `ADS_REFRESH_PLUS_SECONDS` | `10` | Interval for Plus owners. Never faster than the one above. 5-3600. |
 
 Adsterra states no minimum refresh interval. Other networks do (Google's is 30 seconds), so check
 your network's rules before keeping 5 seconds.
@@ -277,7 +273,7 @@ your network's rules before keeping 5 seconds.
 | Setting | Default | What it does |
 |---|---|---|
 | Send in-game ads, `ADS_IN_GAME_ENABLED` | `true` | Send the message to Minecraft servers. Needs **Enable Ads**, but no Adsterra unit. |
-| Message, `ADS_IN_GAME_MESSAGE` | `This server is powered by plugged.host` | Sent as `say <message>`. One line, up to 200 characters. Replace it with your own. |
+| Message, `ADS_IN_GAME_MESSAGE` | empty | Sent as `say <message>`. One line, up to 200 characters. Empty means "This server is powered by" followed by `APP_NAME`. Saving the form with that default text stores an empty value, so it keeps following the panel's name. |
 | Every (minutes), `ADS_IN_GAME_INTERVAL` | `60` | How often each server gets it. 5-1440. |
 
 ### Role Exemptions
@@ -296,7 +292,21 @@ your network's rules before keeping 5 seconds.
 | Dismissal Duration (hours), `ADS_ANTIBLOCK_DISMISS_HOURS` | `12` | How long the browser remembers a dismissal. Ignored in block mode. 0-8760. |
 | Probe Ad Hosts, `ADS_ANTIBLOCK_PROBE` | `true` | Also test whether the ad hosts are reachable, to catch DNS-level blockers. |
 | Never on the Console, `ADS_ANTIBLOCK_SKIP_CONSOLE` | `true` | Keep the detector off the server console. |
-| Custom Message, `ADS_ANTIBLOCK_MESSAGE` | empty | Replaces the body text. Plain text, one line, up to 500 characters. The heading stays "Ads keep plugged.host free" (language file). |
+| Custom Message, `ADS_ANTIBLOCK_MESSAGE` | empty | Replaces the body text, which by default names your panel (`APP_NAME`) and the host of `APP_URL`. Plain text, one line, up to 500 characters. The heading, "Ads keep *APP_NAME* free", comes from the language file. |
+
+### Maintenance Page
+
+One A-ADS unit on the page the panel shows while it is down for maintenance (`php artisan
+down`). It loads nowhere else. [Core](/plugins/core/) renders it, and only while **Enable Ads**
+is on and this plugin is enabled.
+
+| Setting | Default | What it does |
+|---|---|---|
+| A-ADS unit on the maintenance page, `ADS_MAINTENANCE_AADS_UNIT` | empty | The numeric unit ID from your a-ads.com dashboard (digits only, up to 12). Empty means no ad on the maintenance page. |
+| Ad width, `ADS_MAINTENANCE_AADS_WIDTH` | `70%` | Width of the ad frame: a number with `%`, `px` or `vw`, for example `70%` or `728px`. It never grows wider than the page. The form saves anything else as `70%`. |
+
+The form checks both values when you save. A value set by hand in `.env` is not checked, so keep
+the width to that form.
 
 ### Start Credits (the start room)
 
@@ -311,12 +321,12 @@ The section is called "Start Credits" for historical reasons; it configures the 
 | Minimum Wait (seconds), `ADS_START_MIN_DWELL` | `15` | Never release before this, even when the server is already up. 0-120. |
 | Maximum Wait (seconds), `ADS_START_MAX_DWELL` | `30` | Always release after this. 1-300, and never below the minimum. |
 | Grace Period (minutes), `ADS_START_PASS_MINUTES` | `10` | After the room, starts of the same server by the same user skip it for this long. 0-1440. |
-| Claim Lifetime (minutes), `ADS_START_CLAIM_TTL` | `30` | How long a started Linkvertise trip can still be redeemed. 1-1440. |
 
 ### Tokens — Earning
 
-Shown only while **Enable the Start Gate** is on, though earning works with the start room off.
-The Tokens page itself belongs to [Economy](/plugins/economy/).
+Shown whether the start room is on or not; earning doesn't depend on it. The fields below
+**Enable Linkvertise** show while it is on. The Tokens page itself belongs to
+[Economy](/plugins/economy/).
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -327,11 +337,13 @@ The Tokens page itself belongs to [Economy](/plugins/economy/).
 | Linkvertise API Token, `ADS_START_LINKVERTISE_TOKEN` | empty | The Anti-Bypass verification token. Required: every completion is checked against Linkvertise's API. Leave the field blank to keep the stored token. |
 | Tokens per Completion, `ADS_START_LINKVERTISE_REWARD` | `1` | Tokens paid per verified completion. 1-50. |
 | Completions per Day, `ADS_START_LINKVERTISE_DAILY_CAP` | `5` | Paid completions per user per day. `0` means no cap (not recommended). |
+| Claim Lifetime (minutes), `ADS_START_CLAIM_TTL` | `30` | How long a started Linkvertise trip can still be redeemed. 1-1440. |
 
 ### Start Gate — Waiting Room Ads
 
-Shown only while **Enable the Start Gate** is on. These switches also decide what the
-[Queue](/plugins/queue/)'s waiting page shows.
+Shown whether the start room is on or not, because these switches also decide what the
+[Queue](/plugins/queue/)'s waiting page shows. Only **Also Gate Server Navigation** needs the
+start room on.
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -357,10 +369,10 @@ on.
 
 ## Notes
 
-- No ad keys ship with the plugin: the Adsterra and Linkvertise fields start empty, and you
-  enter your own account's values. Two defaults name plugged.host and need replacing: the in-game
-  message and the ad-block text (**Custom Message**). The ad-block heading ("Ads keep plugged.host
-  free") and the rest of the wording are in the plugin's language files, not in settings.
+- No ad keys ship with the plugin: the Adsterra, Linkvertise and maintenance-page A-ADS fields
+  start empty, and you enter your own account's values. The default texts (the in-game message,
+  the ad-block heading and body) are built from `APP_NAME` and `APP_URL`. The rest of the wording
+  is in the plugin's language files, not in settings.
 - A unit that suddenly stops filling usually has a stale host or script URL. Adsterra rotates
   them, so copy the current ones from its dashboard.
 - Linkvertise needs Anti-Bypass switched on in its own dashboard. Without it no verification

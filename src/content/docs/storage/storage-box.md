@@ -212,7 +212,8 @@ Then it:
 
 Run the setup command again (with a new code) to upgrade the agent or change an answer: your
 last answers are the defaults. Do this after you add a node whose SSH port is not the default,
-so its block in `/root/.ssh/config` is written.
+so its block in `/root/.ssh/config` is written, and after you change the mirror interval or the
+minimum free space on the panel: the box picks those up only from the installer.
 
 ### Unattended
 
@@ -293,8 +294,8 @@ Restart the agent after a change: `systemctl restart plugged-host-storage-agent`
 | `PH_AGENT_SECRET` | set by the installer | The shared secret, the panel's `STORAGE_AGENT_SECRET`. At least 32 characters. |
 | `PH_STORAGE_ROOT` | `/mnt/storage` | Where mirrors, snapshots and archives go. |
 | `PH_LISTEN_PORT` | `8687` | The agent's HTTP port. |
-| `PH_MIRROR_INTERVAL_MIN` | `30` | Minutes between two passes of the same server. Copied from the panel at install. |
-| `PH_MIN_FREE_PERCENT` | `10` | Below this much free space, passes are skipped and reported as errors. Copied from the panel at install. |
+| `PH_MIRROR_INTERVAL_MIN` | `30` | Minutes between two passes of the same server. Copied from the panel's `STORAGE_MIRROR_INTERVAL_MIN` each time the setup command runs. |
+| `PH_MIN_FREE_PERCENT` | `10` | Below this much free space, passes are skipped and reported as errors. Copied from the panel's `STORAGE_MIN_FREE_PERCENT` each time the setup command runs. |
 | `PH_SNAPSHOTS` | `3` | Snapshots kept per server, used only until the first plan arrives; the panel's setting wins. |
 | `PH_MIRROR_JOBS` | `1` | Passes at once, never two on the same node. The installer sets half the box's cores, 1 to 4, unless it is already set. |
 | `PH_MAX_ARCHIVE_JOBS` | `3` | Archives built at once. |

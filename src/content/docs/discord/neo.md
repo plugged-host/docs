@@ -101,7 +101,7 @@ The limit is checked before a call and charged after it, so one call may go slig
 | Concurrent model calls | 4 | Panel-wide. Each call holds a PHP worker while it waits. |
 | Gateway enabled | on | Off refuses every neo turn. rux keeps its AI. |
 
-With [plugged-host-economy](/plugins/economy/), plugged.host Plus and PlusPlus raise an
+With [plugged-host-economy](/plugins/economy/), Plus and PlusPlus raise an
 account's limits by the percentages set there (125 % and about 156 % by default). Users see
 their windows as two bars in the chat and get told when a window resets.
 
@@ -113,8 +113,8 @@ On top of the windows, each user may send `NEO_MESSAGES_PER_MINUTE` (10) message
 Mark one or more slots **Premium model (PlusPlus)** to offer a better, more expensive model:
 
 - The chat then shows a model picker: "Other models" or the premium model, named after the
-  slot's label. Only accounts with plugged.host PlusPlus (plugged-host-economy) can pick it;
-  without economy, nobody can.
+  slot's label. Only accounts with PlusPlus (plugged-host-economy) can pick it; without
+  economy, nobody can.
 - Turns that asked for it try the premium slots first and fall back to the others. They count
   at the **Premium model usage** multiplier.
 - Everything else (other chats, neo on Discord, rux's message checks) never reaches a premium
@@ -125,9 +125,22 @@ Mark one or more slots **Premium model (PlusPlus)** to offer a better, more expe
 In the **neo on this panel** section of the same tab:
 
 1. Switch on **Enable neo**.
-2. Check **Human support link**: it defaults to plugged.host's Discord server. Set your own.
-3. Leave **Mask secrets before sending** and **Always ask before deleting or killing** on.
-4. Save.
+2. Tell neo where people get help:
+   - **Human support link**: used when the Discord plugin has no invite URL. While
+     `DISCORD_INVITE_URL` is set, neo sends people to your Discord server with that invite
+     instead.
+   - **Legal contact email** and **Privacy contact email**: the addresses neo gives for legal
+     complaints and for privacy requests.
+
+   Any of them left empty is left out of what neo says.
+3. **AI providers named to users**: your providers as free text, for example `OpenAI and
+   Anthropic`. They appear in the notice users accept on first use and under the chat's
+   settings. Empty: a general sentence about the providers this panel uses (with
+   plugged-host-noprofit, the providers noprofit.space uses).
+4. Leave **Mask secrets before sending**, **Always ask before deleting or killing** and
+   **Automatic log check** on. The log check uploads Minecraft server logs to mclo.gs and shows
+   what it finds above the console.
+5. Save.
 
 The "Ask neo" launcher now appears on the dashboard and on every server page for its owner.
 Owners decide which subusers may use neo on their server: the subuser editor has a **neo** group
@@ -140,12 +153,9 @@ The other values in this section:
   decide what one question costs against the user's limits.
 - **Keep conversations** (30 days): older chats and their images are deleted daily.
 
-:::caution
-neo's prompts and the privacy notice users accept in the chat describe plugged.host and its
-providers (Groq, and Anthropic through a proxy). Edit the plugin's
-`resources/views/prompts/*.blade.php` and the `consent` and `profile.privacy` texts in
-`lang/<locale>/strings.php` so neo describes your service and the notice names your providers.
-:::
+neo's prompts name your panel (`APP_NAME`) and only describe the plugins that are enabled. The
+status page they name is core's `STATUS_PAGE_URL` and the backups site storage's
+`BACKUPS_PORTAL_URL`; both are left out while unset.
 
 Each neo step runs inside a web request and can take up to the turn's time budget, so keep the
 web server's FastCGI read timeout above it. Pelican's nginx configuration uses 300 seconds.
@@ -222,6 +232,9 @@ sudo -u www-data php artisan plugged-host:neo-bot-ask <discord user id> "how do 
 - One conversation per person per channel or DM; the last hour is replayed
   (`NEO_BOT_HISTORY_MINUTES`). Messages are deleted with the chats after the retention period.
 - neo on Discord never uses the premium model.
+- For human help it points to the staff in your Discord server's public channels, with the
+  invite (`DISCORD_INVITE_URL`, else `NEO_SUPPORT_URL`), and gives the legal and privacy emails
+  when they are set.
 - People link Discord through the panel's Discord sign-in ([Membership bot](/discord/membership-bot/#2-use-it-as-the-panels-discord-sign-in));
   neo points unlinked users there.
 

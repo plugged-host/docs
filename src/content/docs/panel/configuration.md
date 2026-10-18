@@ -25,7 +25,8 @@ sudo -u www-data php artisan config:clear
 | Setting | Why |
 |---|---|
 | `APP_ENV=production` | The Discord bots refuse to connect on anything else, so a copy of your panel can't answer on Discord in its place. Use another value on test panels. |
-| `APP_URL=https://panel.example.com` | Links in mail, the agents' install commands and signed URLs are built from it. |
+| `APP_NAME="Example Host"` | The panel's name wherever users see it. For example, Plus and PlusPlus show as "Example Host Plus" and "Example Host PlusPlus", and the in-game ad and the ad-block notice name the panel. |
+| `APP_URL=https://panel.example.com` | Links in mail, the agents' install commands and signed URLs are built from it. The ad-block notice asks users to allow ads on its host. |
 | `REDIS_QUEUE_RETRY_AFTER` / `DB_QUEUE_RETRY_AFTER` | Above the queue worker's timeout, see [Queue worker and scheduler](/panel/queue-and-scheduler/). |
 | Mail (Pelican's settings) | Account mail and some notices go out by mail. |
 
@@ -38,7 +39,8 @@ Go through these in order. Each line links to the page with the details.
    so a half-set-up node stays out of rotation until you tag it.
 2. **[Economy](/plugins/economy/)**: the resource tiers, store prices and what credits buy.
 3. **[Ads](/plugins/ads/)**: ads are **on** by default (`ADS_ENABLED=true`). Add your own ad units,
-   or turn ads off, or disable the plugin.
+   or turn ads off, or disable the plugin. In-game ads are on too: Minecraft servers get "This
+   server is powered by" followed by `APP_NAME`.
 4. **[Abuse](/plugins/abuse/)**: `ABUSE_MODE` starts at `report` (findings are recorded, nothing is
    suspended). Switch to `suspend` once you trust the findings.
 5. **[Minecraft](/plugins/minecraft/)**: the CurseForge API key for modpacks.

@@ -10,6 +10,10 @@ only the panel knows (load, incidents, maintenance), merges the two and serves t
 `/data/*.json` and `/feed.xml`. When the panel is unreachable the page says **Panel: offline**
 instead of going blank, and nodes show the Worker's own verdict.
 
+The Worker always shows a Website and a Panel row from its own probes (`SITE_URL`,
+`PANEL_HEALTH_URL`), even when the panel's export leaves them out because their health URLs are
+empty there.
+
 Everything runs on the Workers Free plan: a Cron Trigger, a SQLite-backed Durable Object
 (`StatusMonitor`) that keeps the state, and static assets for the page.
 

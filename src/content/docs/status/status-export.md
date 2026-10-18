@@ -39,16 +39,16 @@ nginx /data/  →  the status Worker, your website, anyone
    |---|---|---|
    | `STATUS_EXPORT_PATH` | `/var/www/status-export` | Where the files are written. Empty turns the export off; snapshots are still collected. |
    | `STATUS_RSS_BASE_URL` | `https://status.example.com` | The link in the RSS feed. |
-   | `STATUS_SITE_HEALTH_URL` | `https://example.com/` | Probed to decide whether the website is up. The default, `http://127.0.0.1/healthz`, only works if something answers there. |
+   | `STATUS_SITE_HEALTH_URL` | `https://example.com/` | Probed to decide whether the website is up. Empty (the default): not probed, and left out of the export. |
    | `STATUS_SITE_HEALTH_HOST` | | A `Host` header for that probe, when the URL is an IP address. |
-   | `STATUS_PANEL_HEALTH_URL` | `https://panel.example.com/up` | Probed for the panel's own status. |
+   | `STATUS_PANEL_HEALTH_URL` | `https://panel.example.com/up` | Probed for the panel's own status. Empty (the default): not probed, and left out of the export. |
    | `STATUS_HISTORY_DAYS` | `90` | How many days of uptime history are kept and exported. |
    | `STATUS_RESOURCE_THRESHOLD_PERCENT` | `95` | CPU use that, held for five checks in a row, marks a node degraded. Memory and disk don't count. |
 
    :::caution
-   Set both health URLs to addresses that answer with a 2xx. An empty or unreachable URL counts as
-   a failed check: after three of them the website or panel shows as offline, and the page's
-   overall status becomes a major outage.
+   A health URL you set must answer with a 2xx. An unreachable one counts as a failed check: after
+   three of them the website or panel shows as offline, and the page's overall status becomes a
+   major outage. To leave the website or the panel out of the export, leave its URL empty.
    :::
 
 4. **Choose the nodes**: Admin › Status page › Nodes. The collector adds every Pelican node by
@@ -74,8 +74,12 @@ are:
 
 `operational`, `degraded`, `maintenance`, `partial_outage`, `major_outage`, `offline`, `unknown`
 
+`current.json` and `history.json` list the Website and Panel components only when their health URL
+is set; a page should not expect them.
+
 In `incidents.json`, an incident's `components` are the components' **labels** as they appear in
-`current.json` (`"Website"`, `"France 1"`), not keys.
+`current.json` (`"Website"`, `"France 1"`), not keys. An incident can name Website or Panel even
+when that component isn't probed and so isn't in `current.json`.
 
 `targets.json` contains node host names and Wings ports. They aren't secret (every server's
 address is its node's name, and browsers connect to Wings directly), but leave it out of the

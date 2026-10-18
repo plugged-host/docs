@@ -149,7 +149,7 @@ afterwards. CPU is in percent of one thread (100 = one thread).
 
 | Setting | Default | What it does |
 |---|---|---|
-| Domain (`DEVBOX_WEB_DOMAIN`) | empty | The domain devboxes answer under, as `https://<slug>.<domain>`. Empty switches the browser version off. Use a domain your panel's session cookie does not cover. Run `plugged-host:devbox-web-setup` after changing it. |
+| Domain (`DEVBOX_WEB_DOMAIN`) | empty | The domain devboxes answer under, as `https://<slug>.<domain>`, for example `example.net`. Empty switches the browser version off. Refused when it is the panel's own domain, a name under it or a name above it: the registrable domain of `APP_URL` (`example.com` for `panel.example.com`) and `SESSION_DOMAIN` when set, because the panel's session cookie reaches those hosts. Run `plugged-host:devbox-web-setup` after changing it. |
 | Edge IPv4 (`DEVBOX_WEB_ORIGIN_IP`) | empty | Public IPv4 of the panel box (the edge). Every devbox's DNS record points here. |
 | Cloudflare API token (`DEVBOX_CLOUDFLARE_TOKEN`) | empty | A token with Zone DNS edit on the domain's zone, for the devbox DNS records. Only shown when the subdomains plugin is not enabled; with it, the subdomains plugin's token is used. Leave blank to keep the stored one. |
 
@@ -174,8 +174,8 @@ afterwards. CPU is in percent of one thread (100 = one thread).
 
 | Command | What it does |
 |---|---|
-| `plugged-host:devbox-setup` | Installs or updates the devbox egg (with the image from the settings) and creates the system account. Safe to run again; run it after an update or an image change. |
-| `plugged-host:devbox-web-setup` | For VS Code in the browser: creates the devbox CA and the edge's client certificate if missing, makes sure every running devbox has its DNS record, and prints the certificate paths nginx needs. `--no-dns` leaves DNS alone. |
+| `plugged-host:devbox-setup` | Installs or updates the devbox egg (with the image from the settings, named "`<APP_NAME>` Devbox") and creates the system account. It finds both by UUID and username, so a new `APP_NAME` renames the egg at the next run. Safe to run again; run it after an update or an image change. |
+| `plugged-host:devbox-web-setup` | For VS Code in the browser: creates the devbox CA and the edge's client certificate if missing, makes sure every running devbox has its DNS record, and prints the certificate paths nginx needs. Refuses a domain the panel's session cookie reaches, like the settings do. `--no-dns` leaves DNS alone. |
 | `plugged-host:devbox-reconcile` | Stops idle, overdue or no-longer-allowed devboxes, finishes stops Wings has not confirmed (kills after 60 seconds), kills devbox containers nothing in the panel allows, and removes orphaned, moved or unused devboxes. `--dry-run` only says what it would do. |
 
 The scheduler runs `plugged-host:devbox-reconcile` every minute in the background, never two at
@@ -189,9 +189,10 @@ once. It needs the scheduler: a devbox cannot stop itself, because Wings would r
 - **Image**: ok for a pinned digest, warns while the image is a tag, because tags move.
 - **Reconcile (idle stop)**: fails when the reconcile has not run in the last three minutes, which
   usually means the scheduler is not running.
-- **Nodes mount game files**: fails naming the nodes where a devbox found no `/server`. Those
-  nodes lack the Wings data directory in `allowed_mounts` (see
-  [Devboxes on nodes](/nodes/devboxes/)).
+- **Nodes mount game files**: fails naming the nodes where a devbox found no `/server`, each with
+  its data directory (the node's Daemon Base Directory). Add that directory to `allowed_mounts`
+  in the node's Wings `config.yml` and restart Wings (see
+  [Devboxes on nodes](/nodes/devboxes/#allow-the-volume-mount)).
 
 ## Notes
 
@@ -216,8 +217,9 @@ once. It needs the scheduler: a devbox cannot stop itself, because Wings would r
   PluggedHost\Devbox\Models\DevboxBlock::query()->where('user_id', <id>)->update(['lifted_at' => now()]);
   ```
 
-- **Wording.** The settings page, the egg and a few messages name plugged.host, and the settings
-  page and doctor point at a helper script from plugged.host's own tooling for the node change.
-  The manual steps are in [Devboxes on nodes](/nodes/devboxes/). The domain field refuses only
-  plugged.host's own domain; keeping your devbox domain away from your panel's cookie is up to
-  you.
+- **Your panel's name.** The devbox egg, devbox servers' descriptions, the names of new devbox
+  CA and edge certificates, and the page a used-up browser link shows name your panel by
+  `APP_NAME`. Certificates keep the name they were made with. Text inside the devbox image
+  (`ph`'s messages, the login greeting, the notes for AI tools) says plugged.host, and the
+  devbox DNS records carry the comment `plugged.host devbox (plugged-host-devbox)`, by which the
+  plugin tells its own records apart: it never overwrites or deletes a record without it.

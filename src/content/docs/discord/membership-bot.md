@@ -42,14 +42,16 @@ panel's scheduler. There is nothing else to install.
   ```
 
   Check the PHP-FPM `php.ini` (for example `/etc/php/8.5/fpm/php.ini`) as well.
-- **The scheduler line** in the panel user's crontab and the **queue worker** running (sign-in
-  membership checks are queued). See [Queue and scheduler](/panel/queue-and-scheduler/). The
-  bot adds the crontab line itself when it is missing, as long as `www-data` may use `crontab`.
+- **The scheduler line** and the **queue worker** running (sign-in membership checks are
+  queued). See [Queue and scheduler](/panel/queue-and-scheduler/). The bot finds a
+  `schedule:run` line for this panel in the panel user's crontab, `/etc/crontab` or
+  `/etc/cron.d`. When there is none, it adds one to the panel user's crontab itself, as long as
+  `www-data` may use `crontab`.
 - **The plugin's tables**: `sudo -u www-data php artisan migrate` in `/var/www/pelican`.
 - **`APP_ENV=production`** in the panel's `.env`. On any other environment the bot refuses to
   connect (see [Dev panels](#dev-panels)).
-- **plugged-host-economy enabled** if invites and boosts should pay credits. Without it, rewards
-  are recorded as paid but no credits move.
+- **plugged-host-economy enabled** if invites and boosts should pay credits. Without it, matured
+  invites and boost levels wait unpaid, and are paid once economy is enabled.
 
 ## 1. Create the application
 
@@ -127,8 +129,9 @@ Open Admin › Plugins › plugged.host Discord › Settings:
 
 1. **Discord Server (Guild) ID**: in Discord, turn on Developer Mode (User Settings › Advanced),
    right-click your server's icon and choose **Copy Server ID**.
-2. **Discord Server Invite URL**: a permanent invite to your server. The field comes filled with
-   plugged.host's own invite; replace it.
+2. **Discord Server Invite URL** (optional): a permanent invite to your server. Members who
+   linked Discord but are not in the server get it, neo names it for human help, and rux treats
+   it as your own link. Left empty, no invite link or button is shown.
 3. **Discord Bot Token**: the token from step 1.
 4. **Assigned Panel Role**: the panel role members get while they are in the server
    (`Discord Linked` by default).
@@ -154,7 +157,8 @@ panel checks that again when it runs.
 ## 8. Start the daemon and check it
 
 The scheduler starts the gateway daemon within a minute of the token being saved. To install the
-crontab line (if missing) and start it right away:
+crontab line (only if no `schedule:run` line for this panel is in the panel user's crontab,
+`/etc/crontab` or `/etc/cron.d`) and start it right away:
 
 ```bash
 sudo -u www-data php artisan plugged-host:discord-bot-install

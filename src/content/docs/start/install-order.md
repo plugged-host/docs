@@ -15,8 +15,12 @@ add the rest when you need them.
    [Web server](/panel/web-server/), [Queue worker and scheduler](/panel/queue-and-scheduler/)
 4. **A node.** Install Wings, create the node in the panel, give it a location and a deployment
    tag so the servers plugin places servers on it. [Wings nodes](/nodes/wings/)
-5. **Settings.** Go through each plugin's settings: plans and credits, the servers plugin's
-   locations, Minecraft API keys, status export. [Configuration](/panel/configuration/)
+5. **Settings and eggs.** Go through each plugin's settings: plans and credits, the servers
+   plugin's locations, Minecraft API keys, status export. With the game plugins enabled, import
+   the Minecraft egg the servers plugin's catalog expects (`plugged-host:minecraft-setup`) and
+   put your FiveM egg on the FiveM image (`plugged-host:fivem-setup`).
+   [Configuration](/panel/configuration/),
+   [Minecraft](/plugins/minecraft/#setup), [FiveM](/plugins/fivem/#setup)
 6. **Check.** `plugged-host:doctor` lists every plugin, what it is missing, and runs each
    plugin's health checks. [Doctor](/panel/doctor/)
 7. **Abuse agent** on every node. [Abuse agent](/nodes/abuse-agent/)

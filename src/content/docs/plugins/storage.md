@@ -30,8 +30,9 @@ second box, the backup server, can copy everything too and serve archives faster
   card (available, waiting for the first copy, or unreachable; when it was last copied and its
   size) with a Download button for users who may download backups, and an "Off-site Backups"
   button that opens the backups portal.
-- **Backups portal.** A page on its own host name where owners sign in with their panel account
-  and download the copy of each of their servers, including ones an admin deleted recently.
+- **Backups portal.** A page where owners sign in with their panel account and download the copy
+  of each of their servers, including ones an admin deleted recently. It is at the panel's
+  `/backups`, or on a host name of its own.
 - **Failover.** When a node stops answering, its servers are moved to healthy nodes and restored
   from their latest copy. See [Failover](/storage/failover/).
 - **Deleted servers.** A server deleted by an admin or by the panel keeps its copy for 7 days.
@@ -53,7 +54,7 @@ either:
 
 | Mode | What happens |
 |---|---|
-| `off` | Nothing. |
+| `off` | Nothing: the sweep does not run. Recoveries under way wait where they are until the mode is `notify` or `auto` again. |
 | `notify` | Each owner gets a panel notification that the node appears offline, at most once a day. Nothing is moved. |
 | `auto` (default) | Each server is moved to a healthy node and restored from its latest copy, then the owner is told its new address. |
 
@@ -95,20 +96,34 @@ minutes. Older releases stay in `releases/`.
 
 ### Backups portal
 
-The portal is the panel itself, answering on a second host name. Point a host name such as
-`backups.example.com` at the panel box, serve it with the vhost on the
-[Failover](/storage/failover/#the-backups-portal) page, and set `BACKUPS_PORTAL_URL` in the
-panel's `.env`. A visitor who is signed in to the panel is signed in to the portal in one
-redirect; anyone else gets a "Sign in" button that goes through the panel's sign-in page.
+The portal is part of the panel. Where it answers depends on **Portal address**
+(`BACKUPS_PORTAL_URL`):
 
-:::caution
-In this release the portal's own routes (its home page, sign-in callback and sign-out) answer
-only on the host name `backups.plugged.host`, which is written into
-`src/Providers/StoragePluginProvider.php` (`Route::domain('backups.plugged.host')`).
-`BACKUPS_PORTAL_URL` changes only the links that point at the portal. On your own domain,
-change that host name in your copy of the plugin to your portal's, or the portal's sign-in does
-not work. Also set `BACKUPS_PORTAL_URL`: its default sends your users to plugged.host's portal.
-:::
+- **Empty (the default):** at `/backups` on the panel, such as
+  `https://panel.example.com/backups`. It uses the panel's own session: a signed-in user sees
+  their servers at once; anyone else gets a "Sign in" button that opens the panel's sign-in page
+  and comes back. It has no Log out button of its own there: signing out of the panel signs out
+  of the portal. Nothing to set up.
+- **A host name of its own**, such as `https://backups.example.com`: point the name at the panel
+  box, serve it with the vhost on the [Failover](/storage/failover/#the-backups-portal) page and
+  set the address. The portal keeps its own session there. A visitor who is signed in to the
+  panel is signed in to the portal in one redirect; anyone else gets a "Sign in" button that
+  goes through the panel's sign-in page. The page also still answers at the panel's `/backups`.
+
+An address on the panel's own host counts as empty. Every link to the portal follows the
+setting: the "Off-site Backups" button and the card on a server's Backups page, and
+[Theme v2](/plugins/theme-v2/)'s Backups row in the sidebar.
+
+The page carries the panel's name (`APP_NAME`), favicon (`APP_FAVICON`) and logo (`APP_LOGO`,
+left out when unset), and is shown in the user's panel language (English or German). Its other
+links appear only when they have somewhere to go:
+
+| Link | Shown when |
+|---|---|
+| Status | `STATUS_PAGE_URL` from [core](/plugins/core/), or the [status plugin](/plugins/status/)'s `STATUS_RSS_BASE_URL`, is set (the first wins). |
+| Discord support | `DISCORD_INVITE_URL` from the [Discord plugin](/plugins/discord/) is set. |
+| Store | The [economy](/plugins/economy/) plugin's Resource Store page exists. |
+| Sign in with Discord | plugged-host-discord is enabled. |
 
 ## Requirements
 
@@ -117,7 +132,8 @@ not work. Also set `BACKUPS_PORTAL_URL`: its default sends your users to plugged
 - `plugged_host.optional`:
   - `plugged-host-servers`: picks where a failed node's servers go. Without it no recovery
     starts.
-  - `plugged-host-discord`: the portal shows the user's Discord avatar.
+  - `plugged-host-discord`: the portal shows the user's Discord avatar and a "Sign in with
+    Discord" button.
   - `plugged-host-theme-v2`: the portal uses the theme's accent colour.
 - A storage box: a Debian or Ubuntu machine with a large separate disk and a DNS name that the
   panel, your Wings nodes and your users' browsers reach over HTTPS. The installer brings
@@ -132,8 +148,8 @@ not work. Also set `BACKUPS_PORTAL_URL`: its default sends your users to plugged
 2. Set up the storage box with the one-command installer: [Storage box](/storage/storage-box/).
 3. Authorize the box's mirror key on every Wings node:
    `curl -fsSL https://panel.example.com/plugged-host/storage/node/install.sh | sudo bash`.
-4. Serve the backups portal and set `BACKUPS_PORTAL_URL`:
-   [The backups portal](/storage/failover/#the-backups-portal).
+4. The backups portal works at once at `https://panel.example.com/backups`. To give it a host
+   name of its own, see [The backups portal](/storage/failover/#the-backups-portal).
 5. Check it: `sudo -u www-data php artisan plugged-host:doctor plugged-host-storage`.
 
 Optional: a second box, see [Backup server](/storage/backup-server/).
@@ -177,12 +193,11 @@ The same connection settings for the optional second box, plus its own setup com
 | Minimum Free Space (%) `STORAGE_MIN_FREE_PERCENT` | `10` | Below this much free space on the box, the agent skips passes and reports an error instead of writing a truncated copy. Written into the agent's settings by the installer, like the interval. |
 | Daemon Volume Base `STORAGE_DAEMON_BASE` | `/var/lib/pelican/volumes` | Where server volumes are on a node, used only for a node that has no volume path of its own. |
 
-### Daily Backup
+### Backups portal
 
 | Setting | Default | What it does |
 |---|---|---|
-| Enable Daily Backup `STORAGE_DAILY_BACKUP` | `true` | No effect: nothing schedules a daily backup in this release. |
-| Daily Backup Hour (0-23) `STORAGE_DAILY_BACKUP_HOUR` | `4` | No effect, as above. |
+| Portal address `BACKUPS_PORTAL_URL` | empty | The portal's own address, such as `https://backups.example.com`, with that host name pointed at the panel's web server. Empty, or an address on the panel's own host: the portal is at the panel's `/backups`. See [Backups portal](#backups-portal). |
 
 ### Failover
 
@@ -190,7 +205,7 @@ The same connection settings for the optional second box, plus its own setup com
 |---|---|---|
 | Failover Mode `STORAGE_FAILOVER_MODE` | `auto` | `off`, `notify` or `auto`; see [Failover modes](#failover-modes). |
 | Failover After N Failures `STORAGE_FAILOVER_AFTER_FAILURES` | `5` | Failed minute probes in a row before a node counts as down (1 to 100). |
-| Max Failovers Per Run `STORAGE_FAILOVER_MAX_PER_RUN` | `5` | The most servers one sweep starts recovering (or notifies about). The page's help text says nodes; the code counts servers. |
+| Max Failovers Per Run `STORAGE_FAILOVER_MAX_PER_RUN` | `5` | The most servers one sweep starts recovering, or notifies about in `notify` mode (1 to 100). |
 
 ### Only in .env
 
@@ -199,7 +214,6 @@ The same connection settings for the optional second box, plus its own setup com
 | `STORAGE_FAILOVER_MAX_IN_FLIGHT` | `3` | Recoveries installing or restoring at the same time, in `auto` mode. |
 | `STORAGE_DELETED_HOLD_DAYS` | `7` | Days an admin-deleted server's copy is kept. |
 | `STORAGE_PURGE_DELETED` | `true` | `false` stops the agents' cleanup; holds are still recorded. |
-| `BACKUPS_PORTAL_URL` | `https://backups.plugged.host` | The portal's address, used for the "Off-site Backups" button, the Backups page card and the portal's own redirects. Set it. |
 | `LIMBO_NODE_TAG` | `limbo` | The tag that marks limbo nodes. Set on the [Limbo](/plugins/limbo/) settings page; storage reads it too. |
 
 ## Commands
@@ -207,7 +221,7 @@ The same connection settings for the optional second box, plus its own setup com
 | Command | What it does |
 |---|---|
 | `plugged-host:storage-setup` | Prints the command that sets the storage box up, with a one-time code valid for an hour. `--backup` prints the backup server's. |
-| `plugged-host:failover-sweep` | Runs the failover sweep now and prints a summary (`mode`, nodes down, recoveries started, in flight, moved on). `--dry-run` (or `--status`) detects without recovering; `--drill=<server id>` rehearses a real recovery of one server; `--resume=<record id>` retries the restore of a failed recovery. See [Failover](/storage/failover/#commands). |
+| `plugged-host:failover-sweep` | Runs the failover sweep now and prints a summary (`mode`, nodes down, recoveries started, in flight, moved on). `--dry-run` (or `--status`) detects without recovering or notifying; `--drill=<server id>` rehearses a real recovery of one server; `--resume=<record id>` retries the restore of a failed recovery. `--drill` and `--resume` are refused while the mode is `off`. See [Failover](/storage/failover/#commands). |
 | `plugged-host:deleted-servers` | Lists deleted servers whose copy is still kept (`--all` also lists removed and due ones). `--url=<uuid>` prints a signed download link (a uuid or its first 8 characters); `--extend=<uuid> --days=N` keeps a copy N days from now (default 7). |
 
 On the scheduler: the failover sweep runs every minute (`plugged-host-storage:failover-sweep`).
@@ -234,13 +248,12 @@ With a backup server, the last two run again for it, labelled "(backup server)".
   `/etc/plugged-host-storage.env` and restart the agent).
 - Changes made since a server's last completed copy are not in it: up to one mirror interval,
   plus the time a pass takes.
-- A server whose recovery finished is never recovered automatically again, and neither is a
-  drilled one; see [Failover](/storage/failover/#limits).
+- A server is recovered once per outage: after a finished recovery (or drill) it is recovered
+  again when the node it runs on goes down. See [Failover](/storage/failover/#limits).
 - The agent and the panel reject each other's requests when their clocks differ by more than
   five minutes. Keep NTP running on the box.
-- The portal page is branded plugged.host and links to plugged.host's status page and Discord.
-  Change `resources/views/backup-portal.blade.php` in your copy of the plugin.
-- `BACKUPS_PORTAL_URL` and `LIMBO_NODE_TAG` are read straight from `.env`. With a cached config
-  (`php artisan config:cache`) they fall back to their defaults, so don't cache the config.
 - A download link from the portal or the Backups page is valid for `STORAGE_SIGNED_TTL` (15
   minutes). Reload the page for a new one.
+- Older releases had a Daily Backup section (`STORAGE_DAILY_BACKUP`,
+  `STORAGE_DAILY_BACKUP_HOUR`). Nothing ever read them and they are gone: delete the lines from
+  `.env` if they are there; left in, they do nothing.

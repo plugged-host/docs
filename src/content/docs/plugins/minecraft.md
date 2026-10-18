@@ -76,6 +76,12 @@ installs.
   stopped and can keep a zip of the old world in the server folder first.
 - **Version and software.** The **Version and software** section on the server's Settings page
   (from plugged-host-servers) switches loader and version through this plugin.
+- **The Minecraft egg.** The plugin ships a Minecraft: Java Edition egg
+  (`egg/egg-minecraft-java.json`): Purpur, Fabric, Forge and NeoForge in one egg, picked by its
+  `MC_SOFTWARE` variable, with Java 8 to 25 images. `plugged-host:minecraft-setup` imports it
+  under its own UUID, the one the servers plugin's software catalog ships with. Imported this
+  way, the egg's description, its installer's banner and the User-Agent its installer sends
+  PaperMC name your panel (`APP_NAME`, `MINECRAFT_USER_AGENT`).
 - **neo tools.** With [plugged-host-ai](/plugins/ai/) enabled, neo can look up the server
   (`minecraft_info`), search, install, list, toggle and remove content, install Geyser, switch
   software and install modpacks.
@@ -98,10 +104,11 @@ installs.
 - **A Minecraft egg in the servers plugin's software catalog.** The Minecraft pages appear only on
   servers whose egg is listed in that catalog (keyed by egg UUID, see
   [plugged-host-servers › Only in the config file](/plugins/servers/#only-in-the-config-file))
-  with a software variable whose values are `purpur`, `fabric`, `forge` or `neoforge`. The plugin
-  also reads and writes the egg variables `MINECRAFT_VERSION` and, when the egg has it,
-  `BUILD_NUMBER`. "purpur" stands for the whole Paper/Purpur/Spigot family. Quilt is not
-  supported.
+  with a software variable whose values are `purpur`, `fabric`, `forge` or `neoforge`. The egg
+  the plugin ships is that egg: import it with `plugged-host:minecraft-setup` (see Setup) and the
+  shipped catalog entry works as it is. The plugin also reads and writes the egg variables
+  `MINECRAFT_VERSION` and, when the egg has it, `BUILD_NUMBER`. "purpur" stands for the whole
+  Paper/Purpur/Spigot family. Quilt is not supported.
 - **A queue worker.** Modpack installs, world downloads and imports, and the wizard's
   post-reinstall step are queued jobs. See [Queue and scheduler](/panel/queue-and-scheduler/).
 - **Outbound HTTPS** from the panel to the services it reads: `api.modrinth.com`,
@@ -116,13 +123,23 @@ installs.
 
 1. Enable the plugin in Admin › Plugins and run the migrations (one table, `server_onboarding`).
    See [Plugins](/panel/plugins/).
-2. Make sure your Minecraft egg is in the software catalog of
-   [plugged-host-servers](/plugins/servers/#only-in-the-config-file). The shipped entry points at
-   plugged.host's own Minecraft egg, so replace its UUID, startup keys and image keys with your
-   egg's. Open a Minecraft server: the **Plugins** (or **Mods & Modpacks**), **Game Settings**,
+2. Import the Minecraft egg, dry run first:
+
+   ```bash
+   cd /var/www/pelican
+   sudo -u www-data php artisan plugged-host:minecraft-setup --dry-run
+   sudo -u www-data php artisan plugged-host:minecraft-setup
+   sudo -u www-data php artisan plugged-host:doctor plugged-host-minecraft
+   ```
+
+   It imports the egg only when no egg has its UUID yet, so it is safe to run again. The
+   software catalog of [plugged-host-servers](/plugins/servers/#only-in-the-config-file) already
+   points at this egg. To use an egg of your own instead, replace the catalog entry's UUID,
+   startup keys and image keys with your egg's.
+3. Open a Minecraft server: the **Plugins** (or **Mods & Modpacks**), **Game Settings**,
    **Players** and **Worlds** pages should be in its sidebar.
-3. Optional: paste a CurseForge API key in Admin › Plugins › plugged.host Minecraft › Settings.
-4. Check that the queue worker allows jobs of up to 15 minutes (see Notes).
+4. Optional: paste a CurseForge API key in Admin › Plugins › plugged.host Minecraft › Settings.
+5. Check that the queue worker allows jobs of up to 15 minutes (see Notes).
 
 ## Settings
 
@@ -133,6 +150,35 @@ Admin › Plugins › plugged.host Minecraft › Settings, section **CurseForge 
 | CurseForge API key (`CURSEFORGE_API_KEY`) | empty | Turns on CurseForge as a source: search, modpack installs and fingerprint identification of installed jars. The field never shows the stored key; leave it blank to keep it. |
 | Modpack overrides file limit (`MINECRAFT_OVERRIDES_LIMIT`) | `2000` | The most files a CurseForge modpack's `overrides/` folder may hold (0 to 100000). A pack over the limit installs without its overrides. |
 | SpigotMC plugins (`MINECRAFT_SPIGOTMC_ENABLED`) | `true` | Offers SpigotMC as a source on Paper/Purpur servers. |
+
+### Only in `.env`
+
+| Setting | Default | What it does |
+|---|---|---|
+| `MINECRAFT_USER_AGENT` | empty | The User-Agent of every request to Modrinth, CurseForge, Spiget, Mojang and the version APIs, which ask for one that names the application and a contact. Empty means `<APP_NAME>-panel/<release> (<contact>)`: characters a product name cannot hold, such as spaces, become `-`, and the contact is `MAIL_FROM_ADDRESS`, or `APP_URL` while that is unset or an `example.com`, `example.net` or `example.org` address. For example `My-Host-panel/2.2.0 (https://panel.example.com)`. `plugged-host:minecraft-setup` also writes it into the egg's installer, with `-egg/` in place of `-panel/`; a later change reaches the egg only through `--update`. |
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `plugged-host:minecraft-setup` | Imports the Minecraft: Java Edition egg the plugin ships when no egg has its UUID yet. An existing egg is left as it is. |
+| `plugged-host:minecraft-setup --update` | Imports the file over the existing egg: its install script, variables, startup commands, images and config become the file's. Servers are not changed: each keeps its own startup command, image and variable values, and the new install script runs at its next reinstall. |
+| `plugged-host:minecraft-setup --dry-run` | Says what it would do and changes nothing. With `--update`, it lists the variables that would be deleted. |
+
+:::caution
+`--update` deletes every variable of the existing egg that the file does not have, together with
+every server's value for it. Run it with `--dry-run` first, and export the egg (Admin › Eggs ›
+the egg › Export) before you run it for real.
+:::
+
+Nothing runs on the scheduler.
+
+## Doctor checks
+
+- **Minecraft egg**: every egg the servers plugin's software catalog lists exists on the panel,
+  and the check names them. Warns with the UUIDs that are missing, with a pointer to
+  `plugged-host:minecraft-setup` when the missing one is the egg this plugin ships. Also warns
+  when the catalog lists no egg at all, because then no server gets the Minecraft pages.
 
 ## Notes
 
@@ -155,7 +201,3 @@ Admin › Plugins › plugged.host Minecraft › Settings, section **CurseForge 
   allocation ports in the node's firewall.
 - **Large jars** (over 24 MB) are identified by name only, to keep PHP's memory flat.
 - **World uploads** are limited by the node's upload size (Admin › Nodes).
-- **No doctor checks, commands or schedule.** The plugin registers no artisan commands and puts
-  nothing on the scheduler.
-- Outgoing requests to Modrinth, CurseForge, Spiget, Mojang and the version APIs carry a fixed
-  User-Agent that names plugged.host. There is no setting for it.

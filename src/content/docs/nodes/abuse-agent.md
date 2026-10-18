@@ -140,8 +140,9 @@ The endpoint is `POST /plugged-host/abuse/agent/report` on the panel, with the u
 request from the nodes through.
 
 The agent reads the token only when it starts. After resetting a node's daemon token in the panel
-(and updating Wings' configuration), restart the agent:
-`systemctl restart plugged-host-abuse-agent`.
+(and updating Wings' configuration), its reports are refused (HTTP 403, `bad signature`) and the
+node shows Not reporting until you restart the agent with
+`systemctl restart plugged-host-abuse-agent`, or run the install command again.
 
 ## Which nodes report
 

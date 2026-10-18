@@ -16,9 +16,10 @@ AI provider slots you set on the panel, with failover between them.
 ### neo in the panel
 
 - **A chat on the app and server panels.** An "Ask neo" launcher opens a chat sheet (full screen
-  on phones). On first use it shows a notice about what is sent to AI providers. Users can attach
-  up to four images (PNG, JPEG, WebP or GIF, 10 MB each), see their 5-hour and weekly usage,
-  reopen or delete earlier chats, minimize the chat while neo keeps working, and resize it.
+  on phones). On first use it shows a notice about what is sent to AI providers, and to which.
+  Users can attach up to four images (PNG, JPEG, WebP or GIF, 10 MB each), see their 5-hour and
+  weekly usage, reopen or delete earlier chats, minimize the chat while neo keeps working, and
+  resize it.
 - **Tools on a server:** server status, read the console, send a command, power actions (through
   the same start queue, waiting room and hibernation chain as the Start button), list, read,
   search, write and edit files, create folders, rename or move, compress, extract and delete,
@@ -42,8 +43,8 @@ AI provider slots you set on the panel, with failover between them.
   launcher to a small button that turns it back on), **Let neo make changes without asking**,
   usage with reset times, and delete history.
 - **Model picker**, only while a provider slot is marked premium: "Other models" (counted 1x) or
-  the premium slot, named after its label and counted at the premium multiplier. Only
-  plugged.host PlusPlus accounts ([plugged-host-economy](/plugins/economy/)) can pick it.
+  the premium slot, named after its label and counted at the premium multiplier. Only accounts
+  with PlusPlus ([plugged-host-economy](/plugins/economy/)) can pick it.
 - **Safety.** Passwords, tokens and keys in console output and files are masked before they reach
   a provider. Tool output is treated as untrusted. Every change is written to the server's
   activity log as `server:neo.*`.
@@ -51,6 +52,16 @@ AI provider slots you set on the panel, with failover between them.
   server's `logs/latest.log` (or the console's last lines) is uploaded to mclo.gs with secrets
   masked, and the problems mclo.gs recognises are shown above the console with **Ask neo to fix
   it**. A running server's log is uploaded at most every two minutes, and only when it changed.
+  It needs console and file-content access on the server, has its own switch
+  (`NEO_LOG_CHECK_ENABLED`) and never runs while neo is off.
+- **It speaks for your panel.** neo's prompts name the panel (`APP_NAME`) and only describe what
+  is enabled: Plus, PlusPlus, credits and tokens with plugged-host-economy, noprofit.space's
+  terms with plugged-host-noprofit, the off-site mirror and node failover with
+  plugged-host-storage, subdomains with the subdomains plugin. For human help neo names your
+  Discord invite (`DISCORD_INVITE_URL`) or else `NEO_SUPPORT_URL`; it names the status page
+  from [core](/plugins/core/)'s `STATUS_PAGE_URL`, the backups site from
+  [storage](/plugins/storage/)'s `BACKUPS_PORTAL_URL`, and the legal and privacy contacts from
+  `NEO_LEGAL_EMAIL` and `NEO_PRIVACY_EMAIL`. Whatever is left empty is left out.
 
 ### neo on Discord
 
@@ -93,6 +104,10 @@ AI provider slots you set on the panel, with failover between them.
   as main admins.
 - **Moderators:** members of a role an admin made a rux moderator role may order moderation only,
   never against staff, admins, other moderators or themselves.
+- **Your own sites.** Every message check knows your sites, which are never a scam or an advert:
+  the panel's and the status page's host names, the Discord invite, noprofit.space with
+  plugged-host-noprofit, and the domains you list in "Our own sites" (`RUX_TRUSTED_DOMAINS`).
+  rux's prompts name the panel (`APP_NAME`) and the account portal.
 
 ### Shared
 
@@ -102,7 +117,8 @@ AI provider slots you set on the panel, with failover between them.
 - **Both bots run as gateway daemons** started and watched by the scheduler, with the same
   supervisor as the [membership bot](/plugins/discord/#gateway-daemon) (file lock, heartbeat,
   backoff, sticky stop, bounded log). Slow work (an answer, an order, a rule check) runs in a
-  separate worker process so the daemon keeps its connection alive.
+  separate worker process so the daemon keeps its connection alive. On Discord both show as
+  watching the panel's name (`APP_NAME`).
 
 ## Requirements
 
@@ -139,9 +155,13 @@ stored value. neo on Discord and rux pick up changes within a minute.
 | Steps per message `NEO_MAX_STEPS` | `25` | Model calls neo may make for one user message before it must answer (1 to 30). |
 | Context budget (tokens) `NEO_CONTEXT_TOKENS` | `24000` | How much conversation is re-sent with every call (4,000 to 200,000). Every call counts against the user's limits. |
 | Keep conversations (days) `NEO_RETENTION_DAYS` | `30` | Panel chats, their images and neo's Discord messages older than this are deleted daily (1 to 365). |
-| Human support link `NEO_SUPPORT_URL` | `https://discord.gg/plugged-host-1502647500295635085` | Where neo sends people for human help. The default is plugged.host's Discord server: set yours. |
+| Human support link `NEO_SUPPORT_URL` | empty | Where neo sends people for human help when the Discord plugin has no invite URL. While `DISCORD_INVITE_URL` is set, neo sends them to your Discord server with that invite instead. With neither, neo names no link. |
+| Legal contact email `NEO_LEGAL_EMAIL` | empty | The address neo gives for legal complaints (abuse, copyright, illegal content). Empty: neo names none. |
+| Privacy contact email `NEO_PRIVACY_EMAIL` | empty | The address neo gives for privacy complaints and data requests. Empty: neo names none. |
+| AI providers named to users `NEO_PROVIDER_DISCLOSURE` | empty | Free text naming your providers in neo's first-use notice and the note under its chat settings, for example `OpenAI and Anthropic` (at most 255 characters). Empty: a general sentence about the providers this panel uses; with plugged-host-noprofit, the providers noprofit.space uses (Groq, and Anthropic through a proxy). |
 | Mask secrets before sending `NEO_REDACT_SECRETS` | `true` | Passwords, tokens and keys in console output and files become `••••` before they reach a provider. |
 | Always ask before deleting or killing `NEO_ALWAYS_CONFIRM_DESTRUCTIVE` | `true` | Overrides a user's "without asking" choice for deletes and kill. |
+| Automatic log check `NEO_LOG_CHECK_ENABLED` | `true` | Uploads Minecraft server logs to mclo.gs and shows what it finds above the console. Never runs while neo is off. |
 
 ### Tab "neo": Provider 1, 2 and 3
 
@@ -207,6 +227,7 @@ one-shot call and reports the time, the model and whether tool calling works.
 | Ban length `RUX_WARN_BAN` | `24h` | How long; rux lifts the ban afterwards. |
 | Watched channels also enforce the basic guidelines `RUX_WATCH_GUIDELINES` | `true` | Scams, slurs, harassment, sexual content and advertising in watched channels: deleted and warned. |
 | Catch spam automatically `RUX_SPAM` | `true` | The spam guard, in every channel rux can read. |
+| Our own sites `RUX_TRUSTED_DOMAINS` | empty | Domains, comma separated (for example `example.com`), that the message checks treat as yours, never a scam or an advert. Each includes its subdomains. The panel's and the status page's host names, the Discord invite and, with plugged-host-noprofit, noprofit.space always count. |
 
 ### Only in `.env`
 
@@ -282,15 +303,12 @@ plugin's doctor check covers neo's gateway secret.
 
 ## Notes
 
-- **Your service's name.** neo's and rux's prompts describe plugged.host: its sites, Plus and
-  PlusPlus, the legal and privacy contacts, the status page. rux's message checks treat
-  plugged.host's sites and Discord invite as never a scam. The chat's privacy notice names Groq
-  and Anthropic as providers. Edit the plugin's `resources/views/prompts/*.blade.php`,
-  `src/Rux/Rules/ServerFacts.php` and `lang/<locale>/strings.php` (`consent`, `profile.privacy`)
-  to describe your own service and providers.
-- **The log check runs without neo.** It uploads Minecraft server logs to mclo.gs for every user
-  who can open the console and read files, even with neo switched off. There is no setting for
-  it; disable the plugin if you don't want it.
+- **What the prompts assume.** neo's prompts describe your host as a free game and app server
+  host with no uptime guarantee, and rux's as a free game server host. With plugged-host-economy,
+  neo also says that buyers of an old one-time location unlock got Plus and that old priority
+  passes were refunded. If that is not your host, edit the plugin's
+  `resources/views/prompts/*.blade.php` (neo) and `src/Rux/Agent/RuxPrompt.php`,
+  `src/Rux/Rules/RuleService.php` and `src/Rux/Watch/WatchService.php` (rux).
 - **Endpoints must be public.** The settings form and the provider test refuse localhost,
   private, link-local and CGNAT addresses, so a model server on the panel box or your LAN cannot
   be used directly.

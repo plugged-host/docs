@@ -25,9 +25,12 @@ node each minute, a shorter sidebar, a first-login tour, the release number, and
 - **A page that explains it.** The owner and subusers of a suspended server land on a "Server
   suspended" page instead of pages whose buttons all fail. It says who suspended it and when, the
   admin's reason or what the abuse scan found, when the server will be deleted if the abuse purge
-  has scheduled it, and has a "Get help on Discord" button. Anyone with the admin
-  `update server` permission keeps the normal pages. A server parked by
-  [limbo](/plugins/limbo/) shows limbo's restore page instead.
+  has scheduled it, and has a "Get help on Discord" button. The button links to
+  `NEO_SUPPORT_URL` from the [AI plugin](/plugins/ai/), else `DISCORD_INVITE_URL` from the
+  [Discord plugin](/plugins/discord/); with neither set it is hidden and the page tells the owner
+  to contact the panel's administrators instead. Anyone with the admin `update server`
+  permission keeps the normal pages. A server parked by [limbo](/plugins/limbo/) shows limbo's
+  restore page instead.
 
 ### Accounts
 
@@ -117,6 +120,18 @@ button, and a maintenance page for `artisan down` and any other 503 that checks 
 the bottom. The pages for a 403 or 400 keep the reason the panel gives; a 500 shows its detail only
 to root admins.
 
+The pages carry the panel's name, favicon and logo (`APP_NAME`, `APP_FAVICON`, `APP_LOGO`; unset,
+Pelican's own name and icon, as on the panel's pages). Their extra buttons and the ad appear only
+when their setting is filled in:
+
+- **Public Status** on the 5xx and maintenance pages links to `STATUS_PAGE_URL`, else the
+  [status plugin](/plugins/status/)'s `STATUS_RSS_BASE_URL`. With neither set there is no button.
+- **Discord Support** on the maintenance page links to `DISCORD_INVITE_URL` from the
+  [Discord plugin](/plugins/discord/).
+- **An A-ADS ad** under the maintenance page shows the unit in `ADS_MAINTENANCE_AADS_UNIT`, only
+  while the [ads plugin](/plugins/ads/) is enabled and `ADS_ENABLED` is true.
+  `ADS_MAINTENANCE_AADS_WIDTH` sets its width (default `70%`).
+
 ### Navigation
 
 - **Admin sidebar groups.** Dashboard, then Servers (Servers, Nodes, Eggs, Available Resources,
@@ -143,13 +158,26 @@ server's console: console, power buttons, address, the server sidebar, Settings 
 "Replay the welcome tour" in the account menu starts it again. Changing `TOUR_VERSION` shows it
 once more to everyone; `TOUR_ENABLED=false` turns it off immediately.
 
+The tour calls the panel by its name (`APP_NAME`) and covers only what your panel has:
+
+- The sidebar step mentions the Resource Store, Plus and Tokens only while
+  [plugged-host-economy](/plugins/economy/) and that part of it (`CREDITS_ENABLED`,
+  `MEMBERSHIP_ENABLED`, `TOKENS_ENABLED`) are on, and Backups only while `BACKUPS_PORTAL_URL`
+  (the [storage](/plugins/storage/) plugin's backups portal) is set.
+- The usage and balance step needs plugged-host-economy and [Theme v2](/plugins/theme-v2/)'s usage
+  card.
+- On a Minecraft server, the server sidebar step points out the Minecraft pages only while
+  [plugged-host-minecraft](/plugins/minecraft/) is enabled.
+
+The wording is in the plugin's `lang/` files.
+
 ### Release version
 
 The release is the plugins' `VERSION` file plus the commit the plugins checkout is on, for example
 `v2.2.0.9b53c14`, read from `.git` on every request without running git. It appears at the foot
-of every panel page (replacing Pelican's footer), on the error pages, in `plugged-host:doctor`, in
-the status export, and as the version of every plugged.host plugin in Admin › Plugins. See
-[Versions](/reference/versions/).
+of every panel page after the panel's name (replacing Pelican's footer), on the error pages, in
+`plugged-host:doctor`, in the status export, and as the version of every plugged.host plugin in
+Admin › Plugins. See [Versions](/reference/versions/).
 
 ### Shared hooks
 
@@ -206,6 +234,7 @@ Admin › Plugins › plugged.host Core › Settings.
 | Setting | Default | What it does |
 |---|---|---|
 | `PLUGGED_HOST_RELEASE` | unset | Overrides the release shown everywhere, for a deploy without `.git`, e.g. `v2.2.0.9b53c14`. |
+| `STATUS_PAGE_URL` | `STATUS_RSS_BASE_URL`, else empty | The public status page the 5xx and maintenance pages link to, e.g. `https://status.example.com`. Empty hides their "Public Status" button. |
 | `SESSION_REMEMBER_COOKIE` | empty | Gives the "remember me" cookie its own name (letters, digits, `_`, `-`, up to 64). Set it on a panel whose host name is under another Laravel app's cookie domain (a dev panel under the production panel's domain), or the browser hands it the other app's cookie. |
 
 ## Commands
@@ -247,16 +276,6 @@ On the scheduler:
 - **Rebuild after a panel upgrade.** A Pelican upgrade replaces `public/build`. Rebuild the assets
   right away: with the release's own manifest, which has no entries for the plugins, panel pages
   fail (see [Updating](/panel/updating/#upgrading-pelican)).
-- **plugged.host wording and links.** Some text is written for plugged.host: the tour's copy (it
-  names plugged.host, the Resource Store, Plus and tokens), the 5xx and maintenance pages' status
-  link (`https://status.plugged.host`), the maintenance page's Discord button
-  (`DISCORD_INVITE_URL` from the [Discord plugin](/plugins/discord/)) and the suspended page's
-  help button (`NEO_SUPPORT_URL` from the [AI plugin](/plugins/ai/)). Both default to
-  plugged.host's Discord when unset. Change the copy in the plugin's `lang/` files, or turn the
-  tour off.
-- **An ad on the maintenance page.** The maintenance page shows an A-ADS ad slot while
-  `ADS_ENABLED` (the [ads plugin](/plugins/ads/)'s switch) is true, which is its default. Set
-  `ADS_ENABLED=false` if you don't run ads.
 - **Mounts you made yourself.** If you used Pelican mounts into `/var/lib/pelican` or
   `/etc/pelican` before installing core, Wings stops receiving them. The doctor's "Volume
   mounts" check lists them.

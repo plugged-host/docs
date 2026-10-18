@@ -1,23 +1,26 @@
 ---
 title: Queue
-description: The start queue that holds server starts back while a node is over its load line, with Plus priority and a move to a quieter node (plugged-host-queue).
+description: The start queue that sends every server start through a short wait, one at a time per node and only while the node is under its load line, with Plus priority and a move to a quieter node (plugged-host-queue).
 sidebar:
   order: 8
 ---
 
-plugged-host-queue holds a server start back while the server's node is too busy, and sends it as
-soon as the node has room. It never waits longer than a hard cap. Users with plugged.host Plus go
-ahead of everyone without it, and PlusPlus goes to the front. The waiting page can also offer to
-move the server to a quieter node. Starts are queued, not server creation: placing new servers
-on nodes is [Servers](/plugins/servers/)' job.
+plugged-host-queue puts every server start on a short waiting page and sends it for the user:
+after a minimum wait, one start at a time per node, and only while the node is under its load
+line. It never waits longer than a hard cap. Users with Plus go ahead of everyone without it,
+and PlusPlus goes to the front. The waiting page can also offer to move the server to a quieter
+node. Starts are queued, not server creation: placing new servers on nodes is
+[Servers](/plugins/servers/)' job.
 
 ## What it does
 
 - **Catches Start and Restart** from the console and the server list, and neo's power tool,
   through core's start chain. The chain asks three gates in order:
   [Limbo](/plugins/limbo/)'s restore, then this queue, then the [Ads](/plugins/ads/) start gate.
-  The first gate that takes a start owns it. Nothing reaches Wings until it is released. The
-  client API, schedules and Wings' own crash restarts are not intercepted.
+  The first gate that takes a start owns it. The queue takes every start of a user who isn't
+  exempt and has no pass; the node is not measured on the click, only at release. Nothing
+  reaches Wings until it is released. The client API, schedules and Wings' own crash restarts
+  are not intercepted.
 - **The waiting page** in the server panel (not in the sidebar). It shows the user's place in
   line, how long they have waited and the latest time the start will go out. It explains which
   resource is over the line, shows the Plus offer or the user's priority, and offers the
@@ -38,6 +41,11 @@ on nodes is [Servers](/plugins/servers/)' job.
   - it has waited the **minimum wait**, the node is under the line on every resource in **What
     counts as busy**, no other start was released on that node within the **gap between
     releases**, and nobody is ahead of it on that node.
+- **Every start waits a little, even on a quiet node.** With the defaults, a start waits about
+  10 seconds (the minimum wait), and starts on one node go out at most one per 20 seconds (the
+  gap between releases). Set `START_QUEUE_MIN_WAIT` to `0` to release starts on a quiet node at
+  once (the user passes through the waiting page and lands on the console), lower
+  `START_QUEUE_RELEASE_INTERVAL` to reduce the spacing, or turn the queue off.
 - **Works with the tab closed.** The scheduler sweeps every line once a minute and sends the
   start for the user. The page only makes it faster (it polls every few seconds).
 - **No second wait.** After a release, the next starts of that server by that user skip both
@@ -69,7 +77,8 @@ recommended: a full disk doesn't empty itself while someone waits, so that line 
 move.
 
 The same threshold is the line for [Servers](/plugins/servers/)' deployment pauses (10 points
-lower on small nodes). That holds even when this plugin is disabled.
+lower on small nodes). That holds even when this plugin is disabled. A value outside 1-100, set
+by hand in `.env`, counts as 85 in both places.
 
 A node that doesn't answer counts as not busy, so its starts go out after the minimum wait.
 
@@ -78,7 +87,7 @@ A node that doesn't answer counts as not busy, so its starts go out after the mi
 The offer only shows when all of these are true:
 
 - **Offer the move** is on, and the user is the server's owner.
-- The owner has Plus or PlusPlus (unless **plugged.host Plus required** is off).
+- The owner has Plus or PlusPlus (unless **Plus required** is off).
 - The server's disk limit is below **Hide the offer at or above** and is not unlimited.
 - The server has a primary allocation and can be transferred right now. With Servers installed,
   its transfer rules apply too, including the cooldown between moves.
@@ -118,25 +127,28 @@ and a node with no location tag gets no offer.
 ## Settings
 
 Admin › Plugins › plugged.host Queue › Settings. Every value is stored in the panel's `.env`.
+Labels that name Plus start with your panel's name (`APP_NAME`).
 
 ### Start queue
 
 | Setting | Default | What it does |
 |---|---|---|
-| Queue starts on busy nodes, `START_QUEUE_ENABLED` | `true` | Off: starts go straight through, and the next sweep releases everyone still waiting (they asked for a start, so they get it). |
+| Queue starts, `START_QUEUE_ENABLED` | `true` | On: every start of a user who isn't exempt and has no pass goes through the waiting page. Off: starts go straight through, and the next sweep releases everyone still waiting (they asked for a start, so they get it). |
 | Queue restarts too, `START_QUEUE_INCLUDE_RESTART` | `true` | Restart is held as well. The server keeps running while the user waits; the restart is sent on release. |
 | Exempt roles skip the queue, `START_QUEUE_EXEMPT_ROLES_SKIP` | `true` | Members of the Ads plugin's exempt roles skip the queue. Root admins always skip. |
 | What counts as busy, `START_QUEUE_PRESSURE_DIMENSIONS` | `memory,cpu` | Comma-separated: `memory`, `cpu`, `disk`. Unknown words are dropped on save; an empty list means `memory,cpu`. |
-| Busy threshold, `START_QUEUE_THRESHOLD_PERCENT` | `85` | A node above this (%) on any listed resource holds starts. Also the deployment-pause line in Servers. 0-100. |
-| Pace nodes that cannot be read, `START_QUEUE_PACED_ON_UNAVAILABLE` | `true` | Saved, but not acted on in 2.2.0. A node with no reading is treated as not busy either way. |
+| Busy threshold, `START_QUEUE_THRESHOLD_PERCENT` | `85` | A node above this (%) on any listed resource releases nobody until it is back under, except entries at the maximum wait. Also the deployment-pause line in Servers. 1-100. |
+
+`START_QUEUE_PACED_ON_UNAVAILABLE` (the old **Pace nodes that cannot be read** switch) is no
+longer read. A leftover line in `.env` does nothing and can be deleted.
 
 ### Timing
 
 | Setting | Default | What it does |
 |---|---|---|
-| Minimum wait, `START_QUEUE_MIN_WAIT` | `10` | Seconds an entry waits at least before it can be released. 0-300. |
+| Minimum wait, `START_QUEUE_MIN_WAIT` | `10` | Seconds every queued start waits at least before it can be released, even on a quiet node. 0-300. |
 | Maximum wait, `START_QUEUE_MAX_WAIT` | `600` | Seconds after which the start goes out whatever the node looks like. 10-3600, and always above the minimum (raised on save). |
-| Gap between releases, `START_QUEUE_RELEASE_INTERVAL` | `20` | Seconds between two releases on the same node, so a node that just cooled down doesn't get the whole line at once. Entries at the maximum wait ignore it. `0` turns it off. |
+| Gap between releases, `START_QUEUE_RELEASE_INTERVAL` | `20` | Seconds between two releases on the same node, so a line of starts never lands on a node all at once. Entries at the maximum wait ignore it. `0` turns it off. |
 | Drop silent entries after, `START_QUEUE_STALE_AFTER` | `180` | Seconds without the waiting page open after which an entry is dropped, but only if its start no longer means anything: the server is gone, the action was a restart, or the server is already running. Other silent entries still get their start. `0` turns it off. |
 | Skip both waits for (minutes), `START_QUEUE_PASS_MINUTES` | `10` | After a release, this user's next starts of that server skip the queue and the Ads start gate (the gate pass is at least 1 minute). 0-1440. |
 
@@ -145,12 +157,12 @@ Admin › Plugins › plugged.host Queue › Settings. Every value is stored in 
 | Setting | Default | What it does |
 |---|---|---|
 | Offer the move, `START_QUEUE_TRANSFER_ENABLED` | `true` | Shows the quieter-node offer on the waiting page. Independent of the Servers plugin's `TRANSFERS_ENABLED`. |
-| plugged.host Plus required, `START_QUEUE_TRANSFER_REQUIRE_PRIORITY` | `true` | Only owners with Plus or PlusPlus get the offer. Off: anyone waiting can move. |
+| Plus required, `START_QUEUE_TRANSFER_REQUIRE_PRIORITY` | `true` | Only owners with Plus or PlusPlus get the offer. Off: anyone waiting can move. |
 | Hide the offer at or above, `START_QUEUE_TRANSFER_MAX_DISK` | `3072` | Disk limit in MiB at or above which the offer is hidden. `0` means no size limit. Servers with unlimited disk never get the offer. |
 | Same location only, `START_QUEUE_TRANSFER_SAME_LOCATION` | `true` | Only nodes in the server's current location. Off: any viable node, which can be another continent. |
 
-The thresholds `NODES_HOT_PERCENT` and `NODES_STORAGE_PERCENT` live in the
-[Servers](/plugins/servers/) settings. The queue reads the disk placement line from there.
+The disk placement line, `NODES_STORAGE_PERCENT`, lives in the [Servers](/plugins/servers/)
+settings. The quieter-node offer reads it from there.
 
 ## Commands
 
@@ -167,19 +179,10 @@ On the scheduler: `plugged-host:queue-sweep` every minute, never two at once.
 
 ## Notes
 
-- **Every start waits a little, even on a quiet node.** In 2.2.0 every Start or Restart the
-  queue catches goes to the waiting page first. The node is only measured when the entry is
-  released. So with the defaults, every non-exempt start waits about 10 seconds (the minimum
-  wait), and starts on one node go out at most one per 20 seconds (the gap between releases).
-  Set `START_QUEUE_MIN_WAIT` to `0` to release starts on a quiet node at once (the user passes
-  through the waiting page and lands on the console), lower `START_QUEUE_RELEASE_INTERVAL` to
-  reduce the spacing, or turn the queue off.
 - Because the queue comes before the Ads start gate and opens the gate's pass on release, the
   ad-funded start room rarely shows while the queue is on. With
   **Queue restarts too** off, restarts go to the start gate instead. Users still see ads on the
   queue's waiting page.
-- Don't set **Busy threshold** to `0`. Every measurable node would count as busy, so every start
-  would wait the full maximum wait. (Deployment pauses treat `0` as 85.)
 - There is no admin screen for the line. `--status` is the way to see it.
 - A released entry sends the power action as the user and checks their permission again first.
   If the node refuses, the user lands on the console and can press Start again.

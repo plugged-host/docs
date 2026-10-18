@@ -58,6 +58,7 @@ Open Admin › Plugins › plugged.host AI › Settings, tab **rux**:
 | Most credits per gift | Upper limit for one gift (10,000). |
 | Warnings | The warning steps, see [Warnings](#warnings). |
 | AI | Whether watched channels enforce the basic guidelines, and the spam guard. The section also shows the provider chain rux uses. |
+| Our own sites | Your domains, comma separated (`example.com` covers its subdomains). rux's checks never treat links to them as a scam or an advert. The panel's and the status page's addresses and the Discord invite always count. |
 
 Channel and user IDs are copied in Discord with Developer Mode on (User Settings › Advanced),
 by right-clicking the channel or user. Every setting and its `.env` key is on the
@@ -178,6 +179,10 @@ Manual, rule and watched-channel warnings all count. Change the steps on the rux
 - **Spam** is caught without AI in every channel rux can read: 7 messages within 10 seconds, the
   3rd copy of the same text within 2 minutes, 6 or more people and roles pinged, or 25 or more
   emoji. The spam is deleted and the author warned (the thresholds are `RUX_SPAM_*` in the `.env`).
+- **Your own sites are never a scam or an advert.** Every check is told your sites: the panel's
+  and the status page's host names, the Discord invite (`DISCORD_INVITE_URL`), noprofit.space
+  with plugged-host-noprofit, and the domains in **Our own sites**. Add every domain of yours
+  members post links to, or links to it may be judged as advertising.
 - **Staff are never checked**: the server owner, anyone with Administrator, Manage Server, Kick,
   Ban, Timeout or Manage Messages, and rux moderators.
 
@@ -214,11 +219,9 @@ warning history, and never lifts the temporary bans it already gave.
 
 ## Notes
 
-- rux's prompts describe plugged.host, and its message checks treat plugged.host's sites and
-  Discord invite as never a scam. Edit `src/Rux/Agent/RuxPrompt.php`,
-  `src/Rux/Rules/ServerFacts.php` and `src/Rux/Rules/RuleService.php` in the plugin to describe
-  your own service, or links to your own site may be judged as advertising. The settings page
-  text about "noprofit.space admins" means panel root admins on a standalone panel.
+- rux's prompts and checks name your panel (`APP_NAME`) and describe it as a free game server
+  host. If yours is not free, edit `src/Rux/Agent/RuxPrompt.php`, `src/Rux/Rules/RuleService.php`
+  and `src/Rux/Watch/WatchService.php` in the plugin.
 - What rux posts on Discord is in English; set `RUX_LOCALE=de` for German.
 - rux orders try a premium provider slot first, if one is set; message checks never use it.
   Provider rate limits are shared with neo when both use the same keys, so busy providers can

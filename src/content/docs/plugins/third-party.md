@@ -44,9 +44,10 @@ these changes.
 
 ### What it does
 
-- **A Subdomains page on the server**, in the server sidebar's "More" group, for eggs listed in
-  "Supported Egg IDs". The owner picks a name (letters, digits and hyphens, 2 to 63 characters)
-  and, with more than one domain, the domain. The page lists each subdomain with its state
+- **A Subdomains page on the server**, in the server sidebar's "More" group, for the eggs in
+  "Supported Egg IDs", or, while that is empty, every egg the plugin recognises as Minecraft: Java
+  Edition or FiveM / RedM (see "Which game an egg is" below). The owner picks a name (letters,
+  digits and hyphens, 2 to 63 characters) and, with more than one domain, the domain. The page lists each subdomain with its state
   ("Processing" for the first 3 minutes, then "Active"), its type, its deposit, and what players type
   to connect (`connect play.example.com` for FiveM).
 - **The records.** Every subdomain gets an A record (AAAA for an IPv6 address), never proxied by
@@ -57,11 +58,17 @@ these changes.
     `srv-scpsl` or `srv-teamspeak`.
 
   An SRV record points at the node's SRV target (or its FQDN) on the server's primary port. Every
-  record carries the comment "Created by plugged.host Subdomains (... Server #id)".
-- **Which game an egg is.** In this order: the egg IDs in "Minecraft Egg IDs" and "FiveM Egg IDs",
-  plugged.host's own Minecraft and FiveM eggs (by UUID), the egg's `srv-*` features (`srv-minecraft`,
-  `srv-fivem` or `srv-cfx`, and the others above), and finally the egg's name (containing
-  "minecraft" but not "bedrock", or "fivem"/"redm").
+  record carries the comment "Created by <panel name> Subdomains (... Server #id)", with the
+  panel's `APP_NAME` cut to 32 characters. When a subdomain is deleted, leftover records for its
+  server are removed too when they carry that comment under the current panel name (or the older
+  "Created by plugged.host Subdomains" one). Records with any other comment are left alone, so
+  rename the panel only after deleting subdomains you want cleaned up.
+- **Which game an egg is.** In this order: the egg IDs in "Minecraft Egg
+  IDs" and "FiveM Egg IDs"; the egg's `srv-*` features (`srv-minecraft`, `srv-fivem` or
+  `srv-cfx`, and the others above); the egg's tags (`cfx` is FiveM / RedM, `minecraft` is
+  Minecraft: Java Edition unless the egg is also tagged `bedrock` or `proxy`, or has "bedrock" in
+  its name); and finally the egg's name (containing "minecraft" but not "bedrock", or
+  "fivem"/"redm").
 - **Servers on `0.0.0.0`.** The A record gets the allocation's IP when it is a real one; otherwise
   the first of the allocation's alias, the node's SRV target and the node's FQDN that is an IP or
   resolves to one. A server with none gets no Subdomains page.
@@ -73,7 +80,9 @@ these changes.
   2nd, 3rd, then every further one). The deposit is refunded when the subdomain or its server is
   deleted. Without economy, subdomains are free.
 - **Discord requirements.** Optionally the server owner must have linked Discord, and be a member
-  of your Discord server, before creating a subdomain. The page links to your invite.
+  of your Discord server, before creating a subdomain. The server check only applies while
+  [plugged-host-discord](/plugins/discord/) is enabled. The page links to that plugin's invite
+  (`DISCORD_INVITE_URL`) when one is set.
 - **Follows the server.** When [plugged-host-servers](/plugins/servers/) moves a server to another
   node, its records are updated. Deleting a server deletes its subdomains and their records.
 - **Subusers** need the server's Network permissions: read to see the page, create, update and
@@ -106,9 +115,10 @@ these changes.
 3. **Add your domains**: Admin › Subdomains › Domains › New. Enter the zone exactly as it is on
    Cloudflare (`example.com`). The panel looks up its zone ID; "Is synced" shows it worked. If
    not, fix the token and press Sync on the row.
-4. **Set the egg IDs** in the settings: "Supported Egg IDs" for every egg that should have the
-   page, and the Minecraft and FiveM lists for the SRV records. The defaults (`11,12`, `12`, `11`)
-   are plugged.host's egg IDs; look yours up in Admin › Eggs.
+4. **Check which eggs get subdomains.** With the egg ID fields left empty, every Minecraft: Java
+   Edition and FiveM / RedM egg gets the page and its SRV records, recognised by its features,
+   tags or name. Fill in "Supported Egg IDs", "Minecraft Egg IDs" or "FiveM Egg IDs" only to
+   pick eggs by ID; look the IDs up in Admin › Eggs.
 5. **Decide on the Discord requirements** (see the notes), the limits and the deposits.
 6. Optionally set an **SRV target** per node in Admin › Subdomains › SRV Targets, when SRV records
    should point at another host name than the node's FQDN.
@@ -121,17 +131,16 @@ Admin › Plugins › plugged.host Subdomains › Settings.
 |---|---|---|
 | Cloudflare API Token (`SUBDOMAINS_CLOUDFLARE_TOKEN`) | empty; falls back to `CLOUDFLARE_TOKEN` | The token the plugin uses for Cloudflare. Never shown again: leave the field empty to keep it. The New button on Domains appears once a token is set. |
 | Default Subdomain Limit (`SUBDOMAINS_DEFAULT_LIMIT`) | `3` | Subdomains per server when the server has no limit of its own. 1 to 50. |
-| Supported Egg IDs (`SUBDOMAINS_SUPPORTED_EGGS`) | `11,12` | Comma-separated egg IDs whose servers get the Subdomains page. Every other egg has none. |
+| Supported Egg IDs (`SUBDOMAINS_SUPPORTED_EGGS`) | empty | Comma-separated egg IDs whose servers get the Subdomains page. Every other egg has none. Empty: every egg recognised as Minecraft: Java Edition or FiveM / RedM. |
 | Require Linked Discord Account (`SUBDOMAINS_REQUIRE_DISCORD`) | `true` | The server owner must have linked Discord. |
-| Require Discord Server Membership (`SUBDOMAINS_REQUIRE_DISCORD_GUILD`) | `true` | The server owner must be a member of your Discord server. |
-| Create Dual A/AAAA Records (`SUBDOMAINS_DUAL_RECORDS`) | `true` | Saved, but not used by the current code: each subdomain gets one A or AAAA record. |
+| Require Discord Server Membership (`SUBDOMAINS_REQUIRE_DISCORD_GUILD`) | `true` | The server owner must be a member of your Discord server. Only applies while plugged-host-discord is enabled. |
 | Subdomain Blacklist (`SUBDOMAINS_BLACKLIST`) | a list of reserved names, below | Names nobody can take. A `*` matches the rest of a name (`test*`). |
 | 1st Subdomain Cost (`SUBDOMAINS_TOKEN_COST_1`) | `1` | Deposit in tokens for a server's first subdomain. 0 to 1000. |
 | 2nd Subdomain Cost (`SUBDOMAINS_TOKEN_COST_2`) | `3` | For the second. |
 | 3rd Subdomain Cost (`SUBDOMAINS_TOKEN_COST_3`) | `8` | For the third. |
 | 4th+ Subdomain Cost (`SUBDOMAINS_TOKEN_COST_DEFAULT`) | `15` | For every further one. |
-| Minecraft Egg IDs (`SUBDOMAINS_MINECRAFT_EGGS`) | `12` | Eggs that get a Minecraft SRV record. |
-| FiveM Egg IDs (`SUBDOMAINS_FIVEM_EGGS`) | `11` | Eggs that get the FiveM SRV records. |
+| Minecraft Egg IDs (`SUBDOMAINS_MINECRAFT_EGGS`) | empty | Eggs that get a Minecraft SRV record, whatever their features, tags or name. Empty: recognised as described above. |
+| FiveM Egg IDs (`SUBDOMAINS_FIVEM_EGGS`) | empty | Eggs that get the FiveM SRV records. Empty: recognised as described above. |
 
 The default blacklist:
 
@@ -139,17 +148,22 @@ The default blacklist:
 www,panel,admin,api,auth,login,billing,client,node*,dash*,status,cp,webmail,mail,email,smtp,pop,
 imap,ns*,dns*,vpn,ssl,secure,autodiscover,ftp,ssh,sftp,pma,mysql,database,proxy,gateway,cloud*,
 dev,stage,staging,test,prod,internal,support,help,shop,store,docs,legal,terms,privacy,cdn,assets,
-static,app,bot,discord,fivem,minecraft,mc,plugged
+static,app,bot,discord,fivem,minecraft,mc
 ```
 
 ### Notes
 
-- **Without plugged-host-discord, turn off "Require Discord Server Membership".** Membership is
-  only known from the Discord plugin's records, so with that plugin off nobody passes the check
-  and nobody can create a subdomain. "Require Linked Discord Account" also accepts a Discord link
-  made through Pelican's own Discord OAuth.
+- **The server check needs plugged-host-discord.** Membership is only known from the Discord
+  plugin's records, so while that plugin is disabled "Require Discord Server Membership" is
+  skipped. "Require Linked Discord Account" also accepts a Discord link made through Pelican's
+  own Discord OAuth.
 - **Your invite link.** The Discord message links to the Discord plugin's invite
-  (`DISCORD_INVITE_URL`), which falls back to plugged.host's server when unset.
+  (`DISCORD_INVITE_URL`). With none set, it names your Discord server without a link.
+- **Proxy and Bedrock eggs.** An egg tagged `minecraft` and `proxy` (Velocity, BungeeCord) only
+  counts as Minecraft: Java Edition when its name contains "minecraft", and a Bedrock egg never
+  does. With empty egg ID fields such eggs get no Subdomains page. List them in "Supported Egg
+  IDs" to give them subdomains (an A or AAAA record), and a proxy egg also in "Minecraft Egg IDs"
+  for the SRV record.
 - **Names are checked on Cloudflare too.** A name already used by a record in the zone (made by
   hand, for instance) is refused, and a failed write is rolled back, the deposit included.
 - **Don't proxy the records.** The plugin always creates DNS-only records; game traffic can't go

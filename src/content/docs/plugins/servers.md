@@ -23,7 +23,7 @@ locations with live progress, and adds a combined settings page to the server pa
   are all paused shows as **Full**.
 - **Paid location tiers.** Nodes that also carry the `plus` tag form Plus locations, and nodes
   with the `premium` tag form Premium locations (a node with both counts as Premium). Plus
-  locations need plugged.host Plus, and Premium locations need PlusPlus, both sold by
+  locations need Plus, and Premium locations need PlusPlus, both sold by
   [Economy](/plugins/economy/). Tiers never share nodes: a free `nl` server never lands on a
   Plus node.
 - **Plans** are preset sizes shown as tiles: Starter, Standard, Pro, Ultimate, Extreme, Master.
@@ -242,11 +242,12 @@ These apply to every server the plugin creates.
 ### Node pressure
 
 Measured live from Wings, not from allocated sums. A node that doesn't answer reads as "no
-reading", and the guards let it through unless strict mode is on.
+reading", and the disk guard lets it through unless strict mode is on. Memory and CPU are not
+set here: a node over the [Queue](/plugins/queue/)'s **Busy threshold**
+(`START_QUEUE_THRESHOLD_PERCENT`) gets a deployment pause, with a lower line on small nodes.
 
 | Setting | Default | What it does |
 |---|---|---|
-| Node is busy above, `NODES_HOT_PERCENT` | `95` | Kept for compatibility. The start queue and the deployment pause use `START_QUEUE_THRESHOLD_PERCENT` instead. This value only counts when the queue's own threshold is missing, which doesn't happen while the queue plugin's config is present. The help text in the form is out of date. |
 | Stop placing servers above, `NODES_STORAGE_PERCENT` | `90` | Disk use (%) above which a node gets no new servers or transfers. Values outside 1-100 fall back to the default. |
 | Refuse nodes that cannot be measured, `NODES_STORAGE_GUARD_STRICT` | `false` | Off: if the disk filter would leave no node, it is skipped, so a monitoring blip can't empty the pool. On: no reading means no deployment. |
 
@@ -286,8 +287,10 @@ These have no field in the form. Set them in `.env` and clear the config cache (
 | `TRANSFERS_STALL_MINUTES` | `10` | Minutes with no bytes moving before a copy counts as stalled and is aborted. |
 | `TRANSFERS_FINALIZE_MINUTES` | `20` | Minutes the new node gets to confirm after the last byte (it may still be pulling the image). |
 | `TRANSFERS_BATCH_PARALLEL` | `2` | Lighten the load: moves running at once per source node. |
+| `UCS_PROVISION_LOCK_WAIT` | `30` | Seconds a create or resize waits for the account's provisioning lock before it fails as busy. |
 
-`UCS_PREMIUM_COST` is still in the config file but nothing reads it any more.
+`NODES_HOT_PERCENT` (the old **Node is busy above** field) and `UCS_PREMIUM_COST` are no longer
+read. A leftover line in `.env` does nothing and can be deleted.
 
 ### Only in the config file
 
@@ -299,9 +302,11 @@ update replaces the file, so keep a copy of your changes.
 - **`catalog`**: per-egg software types, keyed by **egg UUID**. Each type names the egg variable
   to set (`MC_SOFTWARE`), the startup command key and the Docker image key to deploy with. An
   egg with types gets the EULA checkbox, `eula.txt` written after install, and the Server
-  software section on the Settings page. The shipped entry points at plugged.host's own
-  Minecraft Java egg (types Purpur, Fabric, NeoForge, Forge). Replace the UUID, startup keys and
-  image keys with your egg's, or Minecraft servers get none of these.
+  software section on the Settings page. The shipped entry is for the Minecraft: Java Edition
+  egg that [Minecraft](/plugins/minecraft/) ships (`egg/egg-minecraft-java.json`, types Purpur,
+  Fabric, NeoForge, Forge). Import that egg with `plugged-host:minecraft-setup` and the entry
+  works as it is. To use another egg instead, replace the UUID, startup keys and image keys with
+  its own, or its servers get none of these.
 
 ## Commands
 
@@ -343,7 +348,10 @@ On the scheduler:
 - Resizing pushes the new limits to Wings right away. If Wings can't be reached, the server
   picks them up at its next restart.
 - Creates and resizes of one account run one at a time under a lock, so two requests can't spend
-  the same allowance. A request that waits more than 30 seconds fails as busy.
+  the same allowance. A request that waits longer than `UCS_PROVISION_LOCK_WAIT` (30 seconds by
+  default) fails as busy.
+- Plus and PlusPlus are named after your panel (`APP_NAME`) in what this plugin shows users: the
+  notification when PlusPlus ends, the message for a locked location, and neo's tools.
 - Transfers change the server's address (the new node's FQDN and possibly other ports). Owners
   are told the new address when the move completes.
 - The transfer watcher runs `php artisan` in the background as the panel user. If moves sit at

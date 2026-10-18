@@ -8,8 +8,8 @@ sidebar:
 `plugged-host-fivem` gives FiveM (and RedM) servers their own pages in the server panel: the
 server's `server.cfg` as a form, one-click frameworks from txAdmin's official recipes, a live
 player list, a choice of FXServer build with automatic updates, and a switch to FiveM for GTAV
-Enhanced. The build itself is laid down by the plugged.host FiveM image at every server start.
-The pages only set what the image should install.
+Enhanced. The build itself is laid down by the FiveM image (`ghcr.io/plugged-host/fivem`) at
+every server start. The pages only set what the image should install.
 
 ## What it does
 
@@ -59,7 +59,7 @@ egg id.
   variables `FIVEM_VERSION` and `FIVEM_EDITION` ask for, straight from Cfx, and records the build
   in `alpine/.plugged-host.json` for the panel. See [The FiveM image](/nodes/fivem-image/).
 - **Egg setup command.** `plugged-host:fivem-setup` puts the cfx eggs, and optionally every FiveM
-  server, on the image.
+  server, on the image. In the egg's image list it appears as "`<APP_NAME>` FiveM".
 
 Subuser permissions: Players needs none beyond access to the server. Server configuration needs
 file read and read content (file update to save). Frameworks needs file read, read content,
@@ -96,7 +96,8 @@ the next start.
    ```
 
 3. Restart one FiveM server and watch its console for `[plugged.host] Downloading FiveM legacy
-   build …` and `… installed`.
+   build …` and `… installed`. The `[plugged.host]` prefix comes from the image, whatever your
+   panel is called.
 
 The full guide, including what the command changes on the egg, pre-pulling the image and rolling
 back, is [The FiveM image](/nodes/fivem-image/).
@@ -120,7 +121,7 @@ download page (the two build lists), the cache time for those lists and the reci
 
 | Command | What it does |
 |---|---|
-| `plugged-host:fivem-setup` | Puts the cfx eggs on the plugged.host FiveM image: the image first in the egg's images, the plugin's install script running in that image, the `FIVEM_VERSION` and `FIVEM_EDITION` variables, and SIGINT as the stop signal. Safe to run again. |
+| `plugged-host:fivem-setup` | Puts the cfx eggs on the FiveM image: the image first in the egg's images (named "`<APP_NAME>` FiveM"), the plugin's install script running in that image, the `FIVEM_VERSION` and `FIVEM_EDITION` variables, and SIGINT as the stop signal. Safe to run again. |
 | `plugged-host:fivem-setup --servers` | Also moves every FiveM server that is not on the image onto it. Each server picks it up at its next start. |
 | `plugged-host:fivem-setup --dry-run` | Shows what would change and changes nothing. |
 
@@ -158,8 +159,9 @@ downloads never holds a worker for long.
   without a Content-Length, and GitHub's source archives come without one. The panel downloads
   them into `storage/app/plugged-host-fivem` and uploads them to the node, so keep a few hundred
   MB free on the panel during installs. Everything else in a recipe the node downloads itself.
-- **Wording.** A few user-facing strings name plugged.host (for example "plugged.host does not
-  host or change them" under the build and framework lists, and "not available on plugged.host
-  yet" on the GTAV Enhanced page while it is off). They are in the plugin's `lang/` files.
-  Framework installs also write the endpoint lines of `server.cfg` with the comment
-  `# plugged.host: do not modify!`.
+- **Your panel's name.** The pages name the panel by `APP_NAME`: under the build and framework
+  lists ("`<APP_NAME>` does not host or change them") and on the GTAV Enhanced page while it is
+  off ("not available on `<APP_NAME>` yet"). Framework installs mark the endpoint lines they
+  write into `server.cfg` with `# <APP_NAME>: do not modify!`, a note for people; nothing reads
+  it. Only the image's own console lines say `[plugged.host]`, because the image does not know
+  the panel's name.

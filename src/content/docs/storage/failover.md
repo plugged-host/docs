@@ -29,7 +29,7 @@ scheduler running (see [Queue and scheduler](/panel/queue-and-scheduler/)).
 
 | Mode | What happens to each server on a dead node |
 |---|---|
-| `off` | Nothing. The sweep does not run at all, so drills and resumes do not move on either. |
+| `off` | Nothing. The sweep does not run at all: recoveries under way wait where they are until the mode is `notify` or `auto` again, and the command refuses `--drill` and `--resume`. |
 | `notify` | The owner gets a panel notification, "Your server's node appears offline. Recovery is available.", at most once a day. Nothing is moved. |
 | `auto` (default) | The server is recovered onto a healthy node, as below. |
 
@@ -85,20 +85,25 @@ install has one.
   fails the recovery. Then the server sits on its new node, installed but without (all of) its
   files, and the owner is told (at most once a day) that recovery did not complete. Use
   `--resume` to try the restore again (see [Commands](#commands)).
-
-:::caution
-A server whose recovery finished is never recovered automatically again: its finished record
-still counts as "taken care of", so if its new node dies too, the sweep skips it. The same
-applies to a server you drilled. To make such a server eligible again, delete its rows with
-state `done` from the `node_failovers` table.
-:::
+- **One recovery per outage.** A server whose recovery finished is recovered again, like any
+  other, when the node it now runs on goes down. The sweep skips it only when it is back on the
+  node it was recovered off (moved there by a transfer, by limbo or by hand) and that node has
+  not answered a probe since the recovery finished: that is still the outage the recovery
+  answered, and a second recovery would leave a second copy. A finished drill never stops a
+  later recovery.
+- Core keeps only the last 30 minutes of probes. A server moved back onto its old node that is
+  not picked up within 30 minutes of that node going down again (many servers ahead of it, or the
+  mode `off` meanwhile) looks like the old outage and is skipped until the node answers again.
+  The panel log says so once an hour (`server <id> skipped: it was recovered off node …`). To
+  recover it anyway, delete its rows with state `done` from the `node_failovers` table.
 
 ## The old node
 
 There is no hardware fencing: the plugin cannot power off a dead node, and it never contacts the
 old node during a recovery (only a drill deletes the old copy at the end). What keeps the stale
-copy from coming back is the panel's record: the server now belongs to its new node, and the
-recovery record keeps every later sweep away from it.
+copy from coming back is the panel's record: the server now belongs to its new node, so the old
+node's outage no longer concerns it. If the server is put back on the old node in the panel while
+that node is still down, its finished recovery keeps the sweep from recovering it a second time.
 
 When the old node comes back, its disk still holds the old copies. Wings there is no longer
 given those servers by the panel, but nothing deletes their files or containers. If the node only
@@ -134,7 +139,7 @@ sudo -u www-data php artisan plugged-host:failover-sweep --status
 
 It prints `mode=auto  nodes_down=0  acted=0  in_flight=0  advanced=0  (dry-run)`: how many
 nodes look down, how many servers it would act on, how many recoveries are under way, and how
-many moved a step. In `notify` mode it still sends the notifications. Without `--status` (or
+many moved a step. It sends no notifications, also in `notify` mode. Without `--status` (or
 `--dry-run`) it runs a real sweep, as the scheduler does.
 
 Rehearse a recovery on one server whose node is healthy:
@@ -144,14 +149,13 @@ sudo -u www-data php artisan plugged-host:failover-sweep --drill=<server id>
 ```
 
 The server id is the number in the admin panel. The scheduled sweep carries the drill through
-install and restore, so the mode must be `notify` or `auto`: in `off` mode the command still moves
-the server, but nothing ever restores its files.
+install and restore, so the mode must be `notify` or `auto`: while it is `off` the command refuses
+the drill.
 
 :::danger
 A drill is a real recovery. The server moves to another node, its files are replaced by the
 last copy (changes since then are lost), its old copy is deleted from the old node at the end,
-and its address can change. Afterwards the server is never recovered automatically again (see
-[Limits](#limits)). Drill a stopped test server, not a customer's.
+and its address can change. Drill a stopped test server, not a customer's.
 :::
 
 Pick a failed recovery up again at its restore, for one that already moved its server (the
@@ -161,7 +165,8 @@ server is on its destination, installed, and only the files are missing):
 sudo -u www-data php artisan plugged-host:failover-sweep --resume=<record id>
 ```
 
-The record id is the row's `id` in `node_failovers`; its `detail` column says why it failed:
+Like a drill, it is refused while the mode is `off`. The record id is the row's `id` in
+`node_failovers`; its `detail` column says why it failed:
 
 ```sql
 SELECT id, server_id, state, from_node_id, to_node_id, finished_at, detail
@@ -184,8 +189,9 @@ starting with `plugged-host-storage: failover`.
 
 - **Notifications** in the panel: "Server recovered" with the new address and the time of the
   copy, or "Server node issue" when the node looks offline (`notify` mode) or a recovery did not
-  complete. That message says support has been alerted; the plugin itself only writes the failure
-  to the panel log, so watch the log.
+  complete. The second one asks the owner to contact support if the server stays unavailable.
+  Nobody else is told: the plugin writes the failure to the panel log and the `node_failovers`
+  row, so watch the log.
 - **The Backups page** of every server: an "Off-site copy" card saying whether a copy exists
   (or "Waiting for first copy", or "Unreachable right now"), when it was last copied and its size,
   with a **Download** button for users allowed to download backups and a link to the backups
@@ -197,28 +203,24 @@ starting with `plugged-host-storage: failover`.
 
 ## The backups portal
 
-The portal is the panel itself answering on a second host name: point a host name such as
-`backups.example.com` at the panel box, add the vhost below, and set the portal's address in
-the panel's `.env`:
+The portal is part of the panel. Out of the box it is at `/backups` on the panel
+(`https://panel.example.com/backups`) and uses the panel's own session and sign-in page; nothing
+more to set up. The rest of this section gives it a host name of its own.
+
+Point a host name such as `backups.example.com` at the panel box, add the vhost below, and set
+the portal's address: Admin › Plugins › plugged.host Storage › Settings › Backups portal ›
+**Portal address**, or in the panel's `.env`:
 
 ```ini
 BACKUPS_PORTAL_URL=https://backups.example.com
 ```
 
-A visitor signed in to the panel is signed in to the portal in one redirect (the panel signs a
-one-time, two-minute token with its `APP_KEY`). Anyone else sees a sign-in button that goes
-through the panel's own sign-in page. Leave `SESSION_DOMAIN` unset in the panel's `.env`, so the
-portal keeps its own session cookie on its own host name. Users already signed in to the panel
-can also open the portal on the panel's own host, at `https://panel.example.com/backups`.
-
-:::caution
-In this release the portal's home page, sign-in callback and sign-out answer only on the host
-name `backups.plugged.host`, which is written into the plugin
-(`Route::domain('backups.plugged.host')` in
-`plugged-host-storage/src/Providers/StoragePluginProvider.php`); `BACKUPS_PORTAL_URL` changes only
-the links that point at the portal. On your own domain, change that host name in your copy of the
-plugin to your portal's, or signing in to the portal fails.
-:::
+The portal's pages then answer on that host. A visitor signed in to the panel is signed in to the
+portal in one redirect (the panel signs a one-time, two-minute token with its `APP_KEY`). Anyone
+else sees a sign-in button that goes through the panel's own sign-in page. Leave `SESSION_DOMAIN`
+unset in the panel's `.env`, so the portal keeps its own session cookie on its own host name.
+Users already signed in to the panel can still open the portal on the panel's own host, at
+`https://panel.example.com/backups`. An address on the panel's own host counts as unset.
 
 The vhost serves the panel's code under the portal's name, with the panel's PHP-FPM pool. Put it
 in `/etc/nginx/sites-available/backups.example.com.conf`, link it into `sites-enabled`, get a

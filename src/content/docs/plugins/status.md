@@ -6,17 +6,18 @@ sidebar:
 ---
 
 plugged-host-status gives the panel a public status page's back end. Every minute it records
-whether the website, the panel and each published node are up, keeps the uptime history, and
-writes it all, with your incidents and maintenance notices, as static JSON and RSS files. The
-admin area gets a Status page entry where you publish incidents, pin a component's status by hand
-and choose which nodes the page shows. How the files are served and read is on
-[Status export](/status/status-export/) and [Status Worker](/status/status-worker/); this page
-covers the plugin itself.
+whether each published node is up (and the website and the panel, when you give it their health
+URLs), keeps the uptime history, and writes it all, with your incidents and maintenance notices,
+as static JSON and RSS files. The admin area gets a Status page entry where you publish
+incidents, pin a component's status by hand and choose which nodes the page shows. How the files
+are served and read is on [Status export](/status/status-export/) and
+[Status Worker](/status/status-worker/); this page covers the plugin itself.
 
 ## What it does
 
 - **Checks every minute.** It requests the website's and the panel's health URLs (3 seconds to
-  connect, 5 to answer; any 2xx counts as up), and reads each published node's latest sample from
+  connect, 5 to answer; any 2xx counts as up; the User-Agent is `<APP_NAME> status monitor`). A
+  blank health URL is not requested at all. It reads each published node's latest sample from
   [core's node telemetry](/plugins/core/#nodes). A node without a sample from the last 150 seconds,
   or without load figures, counts as unreachable. Each check is stored as a snapshot and added to
   that component's daily uptime.
@@ -40,8 +41,11 @@ covers the plugin itself.
   writes `data/current.json`, `data/history.json`, `data/incidents.json`, `data/targets.json` and
   the RSS feed (`data/feed.xml` and `feed.xml`) into `STATUS_EXPORT_PATH`, each by writing a
   temporary file and renaming it. `current.json` carries the release the panel runs, for the sites'
-  footers. The format is described on [Status export](/status/status-export/#the-json).
-- **The overall status.** Major outage when the website or the panel is offline, any component is
+  footers. The Website and Panel components appear in `current.json` and `history.json` only when
+  their health URL is set. The format is described on
+  [Status export](/status/status-export/#the-json).
+- **The overall status.** Taken over the listed components only, so a website or panel that isn't
+  checked doesn't count. Major outage when the website or the panel is offline, any component is
   in major outage, or every node is offline; partial outage when anything is offline or in partial
   outage; then degraded, maintenance and unknown, in that order; otherwise operational.
 - **Retention.** Snapshots and daily rows older than `STATUS_HISTORY_DAYS` are deleted.
@@ -93,9 +97,9 @@ Admin › Plugins › plugged.host Status › Settings.
 
 | Setting | Default | What it does |
 |---|---|---|
-| Site health URL (`STATUS_SITE_HEALTH_URL`) | `http://127.0.0.1/healthz` | Requested every minute for the "Website" component. |
+| Site health URL (`STATUS_SITE_HEALTH_URL`) | empty | Requested every minute for the "Website" component, e.g. `https://example.com/`. Empty: the website isn't checked, and the Website row is left out of the export and the overall status. |
 | Site health Host header (`STATUS_SITE_HEALTH_HOST`) | empty | A `Host` header for that request, when the URL is an IP address. |
-| Panel health URL (`STATUS_PANEL_HEALTH_URL`) | empty | Requested every minute for the "Panel" component, e.g. `https://panel.example.com/up` (Laravel's health route, which Pelican has). |
+| Panel health URL (`STATUS_PANEL_HEALTH_URL`) | empty | Requested every minute for the "Panel" component, e.g. `https://panel.example.com/up` (Laravel's health route, which Pelican has). Empty: the panel isn't checked, and the Panel row is left out of the export and the overall status. |
 
 ### Retention & thresholds
 
@@ -121,15 +125,19 @@ On the scheduler:
 
 ## Notes
 
-- **Set both health URLs.** An empty or unreachable URL is not skipped: it fails every check, so
-  after three minutes the component is offline, and an offline website or panel makes the overall
-  status a major outage. The site URL's default only works if something answers
-  `http://127.0.0.1/healthz` on the panel box.
+- **An unreachable health URL is an outage.** A URL that is set but doesn't answer with a 2xx fails
+  every check, so after three minutes the component is offline, and an offline website or panel
+  makes the overall status a major outage. Leave the URL empty instead if you don't want that
+  component.
+- **Unchecked components can still be named.** The Incidents and Components tabs offer Website
+  and Panel even when their health URL is empty. An incident that names one still lists it in
+  `incidents.json`; a control on one does nothing, because the component isn't listed.
 - **The page shows your node names.** The label of a node is its Pelican name and is resynced every
   minute, so name nodes the way visitors should see them.
 - **"Use for Deployments?" only sets the start.** That node setting decides whether a new node is
   published when it is first added; after that, the Nodes tab decides.
 - **The export always covers 90 days.** `history.json` holds the last 90 days of uptime whatever
   `STATUS_HISTORY_DAYS` says; a shorter retention leaves those days empty (`unknown`).
-- **Fixed wording.** The components are labelled "Website" and "Panel", and the RSS feed's title
-  and description name plugged.host ("plugged.host incidents"). They are set in the plugin's code.
+- **Fixed labels.** The components are labelled "Website" and "Panel" in the plugin's code. The RSS
+  feed's title and description use the panel's name: with `APP_NAME="Example Host"` they read
+  "Example Host incidents" and "Operational updates for Example Host."

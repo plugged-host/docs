@@ -1,13 +1,13 @@
 ---
 title: Economy
-description: Credits, tokens, plugged.host Plus and PlusPlus, the Resource Store and the plans every account starts with (plugged-host-economy).
+description: Credits, tokens, Plus and PlusPlus, the Resource Store and the plans every account starts with (plugged-host-economy).
 sidebar:
   order: 3
 ---
 
 plugged-host-economy holds the panel's two currencies and what they buy. **Credits** buy CPU,
-memory and disk in the Resource Store. **Tokens** buy plugged.host Plus and PlusPlus. The plugin
-also defines each account's plan: the resources it may use across all its servers.
+memory and disk in the Resource Store. **Tokens** buy Plus and PlusPlus. The plugin also defines
+each account's plan: the resources it may use across all its servers.
 [Servers](/plugins/servers/) enforces that plan when users create or resize servers.
 
 ## What it does
@@ -27,8 +27,8 @@ also defines each account's plan: the resources it may use across all its server
 - **Resource Store** (app panel, `/store`). One row per resource, with a meter showing what the
   servers use, the rest of the plan, and where prices get steep. Each row offers 1, 2 or 4 steps.
   The page also shows the credit history.
-- **plugged.host Plus page** (app panel, `/plus`; the old `/token-store` redirects there). It
-  compares Free, Plus and PlusPlus and sells both.
+- **Plus page** (app panel, `/plus`; the old `/token-store` redirects there). It compares Free,
+  Plus and PlusPlus and sells both.
 - **Tokens page** (app panel, `/tokens`). It shows the token balance, today's earning cap, the
   recent ledger, and one earn link per configured provider. The earn provider (Linkvertise) is
   set up in the [Ads](/plugins/ads/) settings.
@@ -53,7 +53,7 @@ number of days with tokens or credits, and buying again before it ends adds to t
 | | Free | Plus | PlusPlus |
 |---|---|---|---|
 | Locations | Free | Free and Plus | Free, Plus and Premium |
-| Start queue on a busy node ([Queue](/plugins/queue/)) | Normal place | Ahead of everyone without Plus | At the front |
+| Place in the start queue ([Queue](/plugins/queue/)) | Normal place | Ahead of everyone without Plus | At the front |
 | Ads ([Ads](/plugins/ads/)) | All | No in-game ads; banners refresh more slowly | None at all |
 | CPU | The plan | The plan | The plan + `PLUSPLUS_CPU_BONUS` |
 | neo usage ([AI](/plugins/ai/)) | 100% | `PLUS_AI_PERCENT` | Plus × `PLUSPLUS_AI_PERCENT` (156% by default) |
@@ -63,6 +63,16 @@ server with each tier's devbox resources.
 
 When PlusPlus runs out, [Servers](/plugins/servers/) moves servers off Premium locations and
 takes CPU above the allowance off the servers evenly. That runs every 5 minutes.
+
+Users see Plus and PlusPlus under your panel's name (`APP_NAME`): with
+`APP_NAME="Example Host"` the page is "Example Host Plus". The same goes for its menu entry,
+notifications, ledger lines, the Tokens page, the admin Economy tab and the settings.
+
+The Plus page writes the PlusPlus term from the day settings. Whole weeks read as weeks, anything
+else as days: with the defaults it says "a week, or credits for two weeks", and with
+`PLUSPLUS_TOKEN_DAYS=3` it says "3 days, or credits for two weeks". With credits switched off
+it shows only the token term. The FAQ's answer about paying with credits follows
+`PLUSPLUS_CREDIT_DAYS` the same way.
 
 ### How store prices work
 
@@ -163,7 +173,9 @@ and disk in MB.
 | Enable tokens, `TOKENS_ENABLED` | `true` | Off hides every token surface (including the Tokens page) and stops selling Plus and PlusPlus for tokens. Balances are kept. |
 | Free tokens per day, `TOKENS_DAILY_GRANT` | `0` | Tokens each user gets once a day, the first time their balance is read that day. `0` means tokens must be earned. |
 
-### plugged.host Plus & PlusPlus
+### Plus & PlusPlus
+
+The section title starts with your panel's name (`APP_NAME`).
 
 | Setting | Default | What it does |
 |---|---|---|
@@ -173,9 +185,9 @@ and disk in MB.
 | Plus neo (AI) usage (% of free), `PLUS_AI_PERCENT` | `125` | neo limits for Plus, as a percentage of the free limits. 100-1000. |
 | PlusPlus neo (AI) usage (% of Plus), `PLUSPLUS_AI_PERCENT` | `125` | Applied on top of Plus (125 × 125 = 156%). 100-1000. |
 | PlusPlus price in tokens, `PLUSPLUS_TOKEN_COST` | `10` | Tokens for one PlusPlus period paid in tokens. |
-| Days for the token price, `PLUSPLUS_TOKEN_DAYS` | `7` | Days that period lasts. |
+| Days for the token price, `PLUSPLUS_TOKEN_DAYS` | `7` | Days that period lasts. The Plus page shows it as weeks when it is a whole number of weeks, otherwise as days. |
 | PlusPlus price in credits, `PLUSPLUS_CREDIT_COST` | `150` | Credits for one PlusPlus period paid in credits. |
-| Days for the credit price, `PLUSPLUS_CREDIT_DAYS` | `14` | Days that period lasts. |
+| Days for the credit price, `PLUSPLUS_CREDIT_DAYS` | `14` | Days that period lasts. Shown on the Plus page the same way. |
 
 The settings for earning tokens (`ADS_START_LINKVERTISE_*`, `ADS_START_CLAIM_TTL`) belong to the
 Ads plugin; see [Ads](/plugins/ads/). The earn page reads them even when the Ads plugin is
@@ -198,10 +210,7 @@ on the scheduler; the PlusPlus expiry runs in [Servers](/plugins/servers/).
   over its allowance and can't grow servers until it is back under. With plugged-host-noprofit,
   a lower base takes resources off the servers (see [Servers](/plugins/servers/)).
 - With a price of `0`, Plus or PlusPlus is free, even with tokens switched off.
-- The Plus page says PlusPlus lasts "a week, or credits for two weeks". That line is fixed text.
-  If you change the day counts, change it in the language file too.
-- The names "plugged.host Plus" and "PlusPlus", and the store's hint about inviting people to
-  "our Discord server", are text in the plugin's `lang/en/strings.php` (and `lang/de/`), not
-  settings.
+- The store's hint about inviting people to "our Discord server" is text in the plugin's
+  `lang/en/strings.php` (and `lang/de/`), not a setting.
 - Never change a balance in the database directly. The ledger's `balance_after` column would
   stop matching. Use the Economy tab.

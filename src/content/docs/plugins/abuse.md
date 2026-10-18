@@ -45,8 +45,8 @@ suspended are deleted after a grace period unless an admin steps in.
 - **The owner's other servers.** After a new critical finding, the owner's other servers are
   queued for the full check right away (at most once an hour per owner).
 - **Staff alerts.** With a Discord webhook set, suspensions, deletions and new critical findings
-  are posted to it (at most one finding alert per server or node every 30 minutes; suspensions and
-  deletions always post).
+  are posted to it under the name "`APP_NAME` abuse" (at most one finding alert per server or node
+  every 30 minutes; suspensions and deletions always post).
 - **Purge.** Every hour, servers the abuse checks suspended are deleted once
   `ABUSE_DELETE_AFTER_HOURS` have passed since the suspension, unless an admin unsuspended them
   since, limbo parked them, or a finding on them was dismissed. The suspended page tells the owner
@@ -148,6 +148,10 @@ are registered by the plugin; see [Abuse agent](/nodes/abuse-agent/).
   still cover them.
 - **A stolen node token can't suspend other people's servers.** A node's report only counts for
   servers on that node.
+- **Restart the agent after a Wings token reset.** The agent reads the node's Wings token only when
+  it starts, so after you reset it its reports are refused and the node shows Not reporting until
+  you run `systemctl restart plugged-host-abuse-agent` or the install command again. See
+  [Abuse agent](/nodes/abuse-agent/#how-it-authenticates).
 - **Deleted means deleted.** The purge deletes the server and its files on the node like an
   admin deletion. With [storage](/plugins/storage/) the off-site copy follows its own retention.
 - **Report mode first.** The defaults are deliberate: run `report` until the findings look right
