@@ -1,0 +1,40 @@
+---
+// The site's wordmark as on plugged.host: the mark, "plugged.host" with the accent dot, then
+// "docs" in the muted text colour.
+import { logos } from 'virtual:starlight/user-images';
+const { siteTitleHref } = Astro.locals.starlightRoute;
+---
+
+<a href={siteTitleHref} class="site-title sl-flex" aria-label="plugged.host docs home">
+	{logos.dark && <img alt="" src={logos.dark.src} width="32" height="32" />}
+	<span translate="no">plugged<em>.</em>host <span class="docs">docs</span></span>
+</a>
+
+<style>
+	@layer starlight.core {
+		.site-title {
+			align-items: center;
+			gap: 0.625rem;
+			font-size: var(--sl-text-xl);
+			font-weight: 700;
+			letter-spacing: -0.02em;
+			color: var(--sl-color-white);
+			text-decoration: none;
+			white-space: nowrap;
+			min-width: 0;
+		}
+		img {
+			width: 32px;
+			height: 32px;
+			border-radius: 0.5rem;
+		}
+		em {
+			color: var(--sl-color-text-accent);
+			font-style: normal;
+		}
+		.docs {
+			color: var(--sl-color-gray-3);
+			font-weight: 500;
+		}
+	}
+</style>

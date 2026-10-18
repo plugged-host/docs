@@ -1,0 +1,17 @@
+// Cloudflare Workers with static assets only (no Worker script): Workers Builds runs
+// `npm run build`, then `npx wrangler deploy` uploads dist/. "name" must match the
+// Worker's name in the Cloudflare dashboard.
+{
+    "name": "docs-plugged",
+    "compatibility_date": "2026-10-18",
+    "assets": {
+        "directory": "./dist",
+        // Starlight writes every page as <slug>/index.html.
+        "html_handling": "auto-trailing-slash",
+        // Unknown paths get dist/404.html with a 404 status.
+        "not_found_handling": "404-page"
+    },
+    "observability": {
+        "enabled": true
+    }
+}

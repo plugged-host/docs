@@ -1,0 +1,138 @@
+/* plugged.host's look on Starlight.
+
+   The values are the shared token layer of plugged.host and status.plugged.host
+   (html/assets/app.src.css), which mirrors the panel theme
+   (plugged-host-theme-v2/resources/css/theme.css): royal-blue accent, obsidian
+   surfaces, Space Grotesk and JetBrains Mono. Starlight wants solid greys, so the
+   panel's translucent raises (white at 5/10/15 % over the page) are written out as
+   the colours they produce on #0b0d10.
+
+   Flat, as on the sites: no shadows except menus and the search dialog, no glows,
+   no gradients, asides drawn as a fill without a border or icon. */
+
+:root,
+::backdrop {
+	--sl-font: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+	--sl-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+	--ph-radius-control: 0.5rem;
+	--ph-radius-card: 1rem;
+}
+
+:root[data-theme='dark'],
+[data-theme='dark'] ::backdrop {
+	/* --phv2-text, a light grey between it and text-nav, then text-nav/muted/faint. */
+	--sl-color-white: #ffffff;
+	--sl-color-gray-1: #e5e7eb;
+	--sl-color-gray-2: #d1d5db;
+	--sl-color-gray-3: #9ca3af;
+	--sl-color-gray-4: #71717a;
+	--sl-color-gray-5: #232528; /* --phv2-raise-2 */
+	--sl-color-gray-6: #17191c; /* --phv2-raise */
+	--sl-color-black: #0b0d10; /* --phv2-bg-bottom */
+
+	--sl-color-accent-low: #0e172e; /* --phv2-accent-tint */
+	--sl-color-accent: #1d4ed8; /* --phv2-accent: fills */
+	--sl-color-accent-high: #3b82f6; /* --phv2-accent-bright: accent as text */
+
+	--sl-color-text: var(--sl-color-gray-2);
+	--sl-color-text-accent: var(--sl-color-accent-high);
+	--sl-color-text-invert: #ffffff;
+	--sl-color-bg: var(--sl-color-black);
+	--sl-color-bg-nav: #101319; /* --phv2-bg-top, the sites' top bar */
+	--sl-color-bg-sidebar: #101319;
+	--sl-color-bg-inline-code: var(--sl-color-gray-5);
+	--sl-color-bg-accent: var(--sl-color-accent);
+	--sl-color-hairline-light: var(--sl-color-gray-5);
+	--sl-color-hairline: var(--sl-color-gray-6);
+	--sl-color-hairline-shade: var(--sl-color-black);
+
+	--sl-shadow-sm: none;
+}
+
+:root[data-theme='light'],
+[data-theme='light'] ::backdrop {
+	/* The sites' light set. */
+	--sl-color-white: #0f172a;
+	--sl-color-gray-1: #1e293b;
+	--sl-color-gray-2: #334155;
+	--sl-color-gray-3: #475569;
+	--sl-color-gray-4: #64748b;
+	--sl-color-gray-5: #cbd5e1;
+	--sl-color-gray-6: #e2e8f0;
+	--sl-color-gray-7: #f1f5f9;
+	--sl-color-black: #ffffff;
+
+	--sl-color-accent-low: #dbeafe;
+	--sl-color-accent: #1d4ed8;
+	--sl-color-accent-high: #1e40af;
+
+	--sl-color-text: var(--sl-color-gray-2);
+	--sl-color-text-accent: var(--sl-color-accent);
+	--sl-color-text-invert: #ffffff;
+	--sl-color-bg-nav: #ffffff;
+	--sl-color-bg-sidebar: #ffffff;
+	--sl-color-bg-inline-code: var(--sl-color-gray-7);
+	--sl-color-hairline-light: var(--sl-color-gray-6);
+	--sl-color-hairline-shade: var(--sl-color-gray-6);
+
+	--sl-shadow-sm: none;
+}
+
+/* Headings as on the sites. */
+.sl-markdown-content :is(h1, h2, h3, h4),
+h1#_top {
+	font-weight: 700;
+	letter-spacing: -0.02em;
+}
+
+/* The current page in the sidebar: the accent fill with white text, rounded like
+   the panel's nav items. */
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover,
+.sidebar-content a[aria-current='page']:focus {
+	background-color: var(--sl-color-accent);
+	color: #ffffff;
+	border-radius: var(--ph-radius-control);
+}
+.sidebar-content a {
+	border-radius: var(--ph-radius-control);
+}
+
+/* Asides: a fill, no border, no icon. */
+.starlight-aside {
+	border: 0;
+	border-radius: var(--ph-radius-control);
+}
+.starlight-aside__icon {
+	display: none;
+}
+
+/* Inline code: rounded like the sites' badges, no border. */
+.sl-markdown-content :not(pre) > code {
+	border: 0;
+	border-radius: 0.375rem;
+}
+
+/* Links in prose: the accent text colour, underlined as on the sites. */
+.sl-markdown-content a:not(:where(.not-content *)) {
+	color: var(--sl-color-text-accent);
+	text-underline-offset: 3px;
+}
+
+/* Tables: rows divided by a hairline, no outer frame. */
+.sl-markdown-content table {
+	font-size: var(--sl-text-sm);
+}
+.sl-markdown-content :is(th, td) {
+	border: 0;
+	border-bottom: 1px solid var(--sl-color-hairline-light);
+	vertical-align: top;
+}
+.sl-markdown-content th {
+	background: transparent;
+	color: var(--sl-color-white);
+}
+.sl-markdown-content td code {
+	overflow-wrap: anywhere;
+}
