@@ -26,8 +26,9 @@ add the rest when you need them.
 7. **Abuse agent** on every node. [Abuse agent](/nodes/abuse-agent/)
 8. **Storage box**, then authorize its key on every node; optionally a backup server.
    [Storage box](/storage/storage-box/), [Backup server](/storage/backup-server/)
-9. **Discord**: the membership bot, then neo and rux.
-   [Membership bot](/discord/membership-bot/), [neo](/discord/neo/), [rux](/discord/rux/)
+9. **Discord**: neo's AI providers and rux, then the membership bot (rux, or a bot of its own),
+   then neo on Discord.
+   [rux](/discord/rux/), [Membership bot](/discord/membership-bot/), [neo](/discord/neo/)
 10. **Status page** on Cloudflare, fed by the panel's export.
     [Status export](/status/status-export/), [Status Worker](/status/status-worker/)
 

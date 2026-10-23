@@ -17,7 +17,7 @@ general-purpose product. Most of them can be switched off, and most behaviour is
 | Piece | Where it runs | Code | Guide |
 |---|---|---|---|
 | Panel: Pelican and the plugins, the queue worker and the scheduler | the panel box | [plugged-host/plugins](https://github.com/plugged-host/plugins) | [Panel](/panel/pelican/) |
-| Discord bots (membership bot, neo, rux) | the panel box, started by the scheduler | `plugged-host-discord`, `plugged-host-ai` | [Discord and AI](/discord/membership-bot/) |
+| Discord bots (rux, which is also the membership bot, and neo) | the panel box, started by the scheduler | `plugged-host-discord`, `plugged-host-ai` | [Discord and AI](/discord/membership-bot/) |
 | Wings and the abuse agent | every game node | Wings from Pelican, the agent from `plugged-host-abuse` | [Nodes](/nodes/wings/) |
 | Storage agent: mirrors of every server, failover archives | a storage box (and optionally a backup server) | `plugged-host-storage/agent` | [Storage and failover](/storage/storage-box/) |
 | FiveM image | pulled by nodes from GitHub's container registry | `plugged-host-fivem/image` | [FiveM image](/nodes/fivem-image/) |

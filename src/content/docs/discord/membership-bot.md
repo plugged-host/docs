@@ -1,28 +1,32 @@
 ---
 title: Membership bot
-description: Create the Discord application behind plugged-host-discord, use it as the panel's Discord sign-in, invite it to your server and start its gateway daemon.
+description: The bot behind plugged-host-discord (rux, or a Discord application of its own), the panel's Discord sign-in, the slash commands and the gateway daemon.
 ---
 
-The membership bot is the Discord application of [plugged-host-discord](/plugins/discord/). It
-checks who is in your Discord server, tracks invites and boosts for credit rewards, answers
-`/invites`, `/topinvites` and `/setboost`, and its OAuth2 client is the panel's Discord sign-in
-that users link their Discord with.
+The membership bot is the bot of [plugged-host-discord](/plugins/discord/). It checks who is in
+your Discord server, tracks invites and boosts for credit rewards, gives the 2-boost role and
+answers `/invites`, `/topinvites` and `/setboost`.
 
-The panel can run up to three Discord applications. Each is a separate bot with its own token:
+With [plugged.host AI](/plugins/ai/) installed and [rux](/discord/rux/) given a token, **rux is
+the membership bot**: the plugin uses rux's token and `DISCORD_BOT_TOKEN` is not read. You then
+run two bots, rux and neo (see [Use rux as the membership bot](#use-rux-as-the-membership-bot)).
+Without rux, the membership bot is a Discord application of its own with `DISCORD_BOT_TOKEN`.
+Either way, the panel's Discord sign-in, which users link their Discord with, is a Discord
+application's OAuth2 client ([step 2](#2-use-it-as-the-panels-discord-sign-in)).
 
 | | Membership bot | neo | rux |
 | --- | --- | --- | --- |
-| What | membership, invite and boost rewards, slash commands, Discord sign-in | account questions on Discord | moderation, rules, giveaways |
+| What | membership, invite and boost rewards, the 2-boost role, slash commands | account questions on Discord | moderation, rules, giveaways |
 | Plugin | plugged-host-discord | plugged-host-ai | plugged-host-ai |
-| Token | `DISCORD_BOT_TOKEN` | `NEO_BOT_TOKEN` | `RUX_BOT_TOKEN` |
+| Token | rux's when rux has one, else `DISCORD_BOT_TOKEN` | `NEO_BOT_TOKEN` | `RUX_BOT_TOKEN` |
 | Server | `DISCORD_GUILD_ID` | `NEO_BOT_GUILD_ID` (defaults to `DISCORD_GUILD_ID`) | `RUX_GUILD_ID` (defaults to `DISCORD_GUILD_ID`) |
 | Runs on | production only, unless `DISCORD_ALLOW_NON_PRODUCTION=true` | production only | production only |
 | Status | `plugged-host:discord-bot-supervise --status` | `plugged-host:neo-bot-supervise --status` | `plugged-host:rux-supervise --status` |
 | Log | `storage/logs/discord-bot.log` | `storage/logs/neo-bot.log` | `storage/logs/rux.log` |
 | Guide | this page | [neo](/discord/neo/) | [rux](/discord/rux/) |
 
-All three run on the panel box as long-lived artisan processes, started and restarted by the
-panel's scheduler. There is nothing else to install.
+All three daemons run on the panel box as long-lived artisan processes, started and restarted by
+the panel's scheduler. There is nothing else to install.
 
 ## Before you start
 
@@ -52,6 +56,40 @@ panel's scheduler. There is nothing else to install.
   connect (see [Dev panels](#dev-panels)).
 - **plugged-host-economy enabled** if invites and boosts should pay credits. Without it, matured
   invites and boost levels wait unpaid, and are paid once economy is enabled.
+
+## Use rux as the membership bot
+
+When rux is the membership bot, its daemon and the membership daemon are two connections of the
+same bot. They don't get in each other's way: they ask Discord for different events (intents
+`37377` and `67`), slash commands go to the membership daemon and rux's giveaway buttons to rux,
+and the membership daemon shows the same status as rux.
+
+1. Set up [rux](/discord/rux/). In its application's **Bot** page, also switch on **Server
+   Members Intent**: joins, leaves and boosts need it.
+2. rux needs two more things in your server: the **applications.commands** scope and the
+   **Manage Server** permission (reading invites). Invite it with permissions
+   `2253174605966390` instead of `2253174605966358`, or give its role Manage Server in Server
+   Settings › Roles. Its role also has to be above the 2-boost role ([step 5](#5-order-the-roles)).
+3. Fill in the settings ([step 6](#6-fill-in-the-settings)) without a token: the token field says
+   it is not used while rux has one.
+4. Register the slash commands under rux ([step 7](#7-register-the-slash-commands)).
+5. Check the daemon ([step 8](#8-start-the-daemon-and-check-it)). `storage/logs/discord-bot.log`
+   says `Logged in as bot [rux]`.
+
+Steps 1 and 4 below create and invite a bot of its own; with rux, skip them. Step 2 still
+applies: give the sign-in an application of its own, so users see your panel's name when they
+link Discord. It needs no bot.
+
+### Moving to rux from a bot of its own
+
+1. Do the steps above. When rux's token is set, the supervisor replaces the membership daemon by
+   itself within a minute.
+2. Register the slash commands again ([step 7](#7-register-the-slash-commands)), so they belong to
+   rux.
+3. Kick the old bot from your server. In the Developer Portal, open the old application's
+   **Bot** page, click **Reset Token** and don't store the new one. Keep the application if it is
+   your Discord sign-in.
+4. Remove `DISCORD_BOT_TOKEN` from the panel's `.env`: nothing reads it while rux has a token.
 
 ## 1. Create the application
 
@@ -132,7 +170,7 @@ Open Admin › Plugins › plugged.host Discord › Settings:
 2. **Discord Server Invite URL** (optional): a permanent invite to your server. Members who
    linked Discord but are not in the server get it, neo names it for human help, and rux treats
    it as your own link. Left empty, no invite link or button is shown.
-3. **Discord Bot Token**: the token from step 1.
+3. **Discord Bot Token**: the token from step 1. Leave it empty when rux is the membership bot.
 4. **Assigned Panel Role**: the panel role members get while they are in the server
    (`Discord Linked` by default).
 5. Adjust the rewards and the reward hold if you want, then **Save**.
@@ -142,7 +180,8 @@ server ID or token registers the slash commands for you.
 
 ## 7. Register the slash commands
 
-Saving the settings does this. To do it by hand, or after changing the bot's application:
+Saving the settings does this. To do it by hand, or after changing the bot's application (also
+after making rux the membership bot):
 
 ```bash
 cd /var/www/pelican
@@ -206,9 +245,10 @@ Only a panel with `APP_ENV=production` connects the gateway, registers slash com
 or takes Discord roles. On any other panel the supervisor stays idle and stops a daemon it finds.
 
 :::danger
-Never give a dev or staging panel production's bot tokens. Two daemons on one token answer every
-slash command twice and count every join twice, and a dev panel's hourly sync would add and
-remove real members' roles from its own database. Create separate Discord applications for a dev
+Never give a dev or staging panel production's bot tokens, rux's included: with rux's token set,
+a panel's membership bot is rux. Two membership daemons on one token answer every slash command
+twice and count every join twice, and a dev panel's hourly sync would add and remove real
+members' roles from its own database. Create separate Discord applications for a dev
 panel and a separate test server, then set `DISCORD_ALLOW_NON_PRODUCTION=true` in its `.env`.
 :::
 
@@ -224,4 +264,5 @@ neo on Discord and rux have no such switch: they only ever run on a production p
 | "The gateway daemon is stopped on purpose" | Someone ran `--stop`. Run `--start`. |
 | Supervision says `idle — not the production panel` | `APP_ENV` is not `production`. See [Dev panels](#dev-panels). |
 | A command run as root says it refuses to run as root | `sudo` is missing; run it as `www-data` instead. |
-| Slash commands do not appear | Invite the bot with the **applications.commands** scope and register them again. |
+| Slash commands do not appear | Invite the bot with the **applications.commands** scope and register them again. After making rux the membership bot, register them again so they belong to rux. |
+| The log says `Logged in as bot [<another name>]` although rux is set up | rux has no token yet, or plugged.host AI is disabled: the plugin then uses `DISCORD_BOT_TOKEN`. |

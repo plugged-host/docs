@@ -40,6 +40,8 @@ questions.
    watched channels and "hey rux" need it. Without it Discord refuses the connection (close
    code 4014); rux then reconnects without it, so DMs and @mentions keep working, and tries
    again with it every 6 hours. The settings page says when this happens.
+4. If rux will also be your [membership bot](/discord/membership-bot/#use-rux-as-the-membership-bot),
+   switch on **Server Members Intent** as well.
 
 ## 2. Fill in the settings
 
@@ -87,6 +89,10 @@ The `Invite:` line has scope `bot` and permissions `2253174605966358`:
 | Manage Nicknames | Setting nicknames. |
 
 The rux tab shows the same link in its status box once rux can run.
+
+As the [membership bot](/discord/membership-bot/#use-rux-as-the-membership-bot), rux also needs
+the **applications.commands** scope (slash commands) and **Manage Server** (reading invites):
+permissions `2253174605966390`.
 
 ## 4. Order the roles
 

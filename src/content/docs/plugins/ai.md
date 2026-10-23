@@ -108,6 +108,9 @@ AI provider slots you set on the panel, with failover between them.
   the panel's and the status page's host names, the Discord invite, noprofit.space with
   plugged-host-noprofit, and the domains you list in "Our own sites" (`RUX_TRUSTED_DOMAINS`).
   rux's prompts name the panel (`APP_NAME`) and the account portal.
+- **One bot for the server.** With a token for rux, [plugged-host-discord](/plugins/discord/)
+  uses rux's bot too, so rux is also the [membership bot](/discord/membership-bot/#use-rux-as-the-membership-bot)
+  (invites, boosts, the 2-boost role, its slash commands).
 
 ### Shared
 
@@ -212,7 +215,7 @@ one-shot call and reports the time, the model and whether tool calling works.
 | Setting | Default | What it does |
 | --- | --- | --- |
 | rux is on `RUX_ENABLED` | `false` | Master switch for the bot. |
-| Bot token `RUX_BOT_TOKEN` | empty | The token of rux's own Discord application. |
+| Bot token `RUX_BOT_TOKEN` | empty | The token of rux's own Discord application. plugged-host-discord uses it too, instead of `DISCORD_BOT_TOKEN`. |
 | Discord server id `RUX_GUILD_ID` | `DISCORD_GUILD_ID` | The server rux moderates. |
 | Time zone `RUX_TIMEZONE` | `Europe/Paris` | rux reads and writes every time in this zone. Members see Discord timestamps in their own zone. |
 | Default giveaway channel id `RUX_GIVEAWAY_CHANNEL_ID` | empty | Used when an order names no channel. |
@@ -260,7 +263,7 @@ one-shot call and reports the time, the model and whether tool calling works.
 
 The daemons' restart timings, log size, run-as user and PHP binary are plugged-host-discord's
 [supervisor settings](/plugins/discord/#gateway-daemon--supervision), and its "Automatic
-restarts" switch stops all three bots' supervision.
+restarts" switch stops the supervision of all three daemons.
 
 ## Commands
 

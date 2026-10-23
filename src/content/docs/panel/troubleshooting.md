@@ -47,6 +47,6 @@ Then look at `storage/logs/laravel.log`, and for the Discord bots their own logs
 ## Memory
 
 The panel box runs PHP-FPM, the queue worker, the scheduler's commands and up to three Discord
-bots side by side. Keep an eye on memory before adding heavy tools to the same box (an IDE server,
+bot daemons side by side. Keep an eye on memory before adding heavy tools to the same box (an IDE server,
 a local Workers dev server, a second panel): when the kernel runs out, it tends to kill the
 database first.

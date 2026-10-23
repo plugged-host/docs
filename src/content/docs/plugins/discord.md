@@ -9,7 +9,8 @@ plugged-host-discord connects the panel to your Discord server. It checks whethe
 linked Discord is a member of the server, rewards invites and boosts with credits, answers a few
 slash commands, and keeps one long-lived gateway daemon running that tracks joins and leaves in
 real time. It is also the base the [AI plugin](/plugins/ai/) builds its two Discord bots on: their
-supervisor, the Discord account lookups and the credit payouts all come from here.
+supervisor, the Discord account lookups and the credit payouts all come from here. With the AI
+plugin's rux set up, the plugin's bot is rux, so one bot does both jobs.
 
 ## What it does
 
@@ -69,10 +70,11 @@ supervisor, the Discord account lookups and the credit payouts all come from her
 ## Requirements
 
 - `plugged_host.requires`: plugged-host-core.
-- `plugged_host.optional`: plugged-host-economy. Credits for invites, boosts and giveaways need
-  it (see [Notes](#notes)).
-- A Discord application with a bot, **Server Members Intent** switched on, invited to your
-  server. The same application's OAuth2 client is the panel's Discord sign-in.
+- `plugged_host.optional`: plugged-host-economy, plugged-host-ai. Credits for invites, boosts and
+  giveaways need economy (see [Notes](#notes)). With plugged-host-ai and a token for rux, the
+  plugin uses rux's bot.
+- A bot with **Server Members Intent** switched on, invited to your server: rux, or a Discord
+  application of its own. A Discord application's OAuth2 client is the panel's Discord sign-in.
 - The panel's [queue worker and scheduler](/panel/queue-and-scheduler/).
 - PHP CLI with the `pcntl`, `posix` and `openssl` extensions, and `exec` and `shell_exec` not in
   `disable_functions` (CLI and PHP-FPM).
@@ -81,8 +83,8 @@ supervisor, the Discord account lookups and the credit payouts all come from her
 
 ## Setup
 
-Follow [Membership bot](/discord/membership-bot/): create the application, enable Pelican's
-Discord OAuth, invite the bot, fill in the settings and check the daemon.
+Follow [Membership bot](/discord/membership-bot/): use rux or create an application, enable
+Pelican's Discord OAuth, invite the bot, fill in the settings and check the daemon.
 
 ## Settings
 
@@ -100,7 +102,7 @@ Members Intent check) and what the gateway daemon is doing.
 | --- | --- | --- |
 | Discord Server (Guild) ID `DISCORD_GUILD_ID` | empty | Your Discord server's ID. Nothing is checked and the rewards tab is hidden until it is set. |
 | Discord Server Invite URL `DISCORD_INVITE_URL` | empty | The invite shown to users who linked Discord but are not in the server. neo also uses it as its support link, and rux treats it as your own link. Empty: no invite link or button is shown anywhere. |
-| Discord Bot Token `DISCORD_BOT_TOKEN` | empty | The bot's token. Needed for joins, invites, boosts, slash commands and the bot-side membership check. |
+| Discord Bot Token `DISCORD_BOT_TOKEN` | empty | The bot's token. Needed for joins, invites, boosts, slash commands and the bot-side membership check. Not read while rux has a token: the plugin then uses rux's, and the field says so. |
 | Discord Public Key `DISCORD_PUBLIC_KEY` | empty | Only for HTTP interactions: verifies Discord's signature on `/api/discord/interactions`. |
 
 ### Role & Membership Automation
@@ -218,6 +220,11 @@ the two status boxes on the settings page.
   stay pending and boost levels stay unpaid. Once economy is enabled, they are paid, each once.
 - Leave **Interactions Endpoint URL** empty in the Discord Developer Portal. When it is set,
   Discord sends slash commands there instead of over the gateway.
+- When rux is the bot, the gateway daemon and rux's daemon are two connections of the same bot.
+  They ask for different events (intents `67` and `37377`), slash commands go here and rux's
+  giveaway buttons to rux, and commands are added one by one, never all replaced. When rux's
+  token changes, the supervisor replaces the daemon within a minute; register the slash commands
+  again after switching to rux.
 - `/setboost` and `plugged-host:discord-boost-set` exist because Discord does not say how many
   times a member boosted. The plugin works it out from the 2-boost role and the server's boost
   total, which is a best guess.
