@@ -40,5 +40,5 @@ agent's own code (`2.2.0.1a2b3c4`), so it changes only when the agent or the rel
 
 ## Pelican
 
-Each release is built against one Pelican version (2.2: **v1.0.0-rc.1**). See
+Each release is built against one Pelican version (2.2.0: v1.0.0-rc.1; 2.2.1: **v1.0.0-rc.2**). See
 [Updating](/panel/updating/#upgrading-pelican) before moving either.

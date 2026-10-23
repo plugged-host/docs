@@ -13,7 +13,7 @@ folder has its `LICENSE`), while the plugged.host plugins are MIT.
 | Plugin | Author | Version | Ships | plugged.host changes |
 |---|---|---|---|---|
 | `announcements` | Boy132 | 1.1.0 | enabled | none |
-| `subdomains` | Boy132 and HarlequinSin | 2.2.0 (follows the plugged.host release) | enabled | many, see below |
+| `subdomains` | Boy132 and HarlequinSin | 2.2.1 (follows the plugged.host release) | enabled | many, see below |
 | `mclogs-uploader` | Boy132 | 1.0.1 | disabled | none |
 
 ## Announcements

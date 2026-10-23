@@ -55,13 +55,23 @@ bundle, FiveM downloads). Do it by hand instead:
    ```
 
 4. **Dependencies:** `sudo COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader`.
+   Safer order on a panel that keeps taking requests in maintenance mode: put only the new
+   `composer.json`, `composer.lock`, `package.json` and `yarn.lock` in first, run this, and extract
+   the rest once it is done, so nothing boots the new code against a half-written `vendor/`.
 5. **Update the plugins** to the release that supports the new Pelican (`git -C plugins pull`).
 6. **Migrate, build, clear:** `migrate --force`, `yarn install && yarn build`, then the four cache
    clears. The build is required: the release's prebuilt assets don't include the plugins, and
    without it every page fails.
-7. `sudo chown -R www-data:www-data /var/www/pelican`, `queue:restart`, then
-   `sudo -u www-data php artisan up`.
+7. `sudo chown -R www-data:www-data /var/www/pelican`, reload PHP-FPM (`systemctl reload
+   php8.5-fpm`: a worker can keep stale compiled code of files that were replaced under it),
+   `queue:restart`, restart the Discord bots (`plugged-host:discord-bot-supervise --restart`,
+   `neo-bot-supervise`, `rux-supervise`), then `sudo -u www-data php artisan up`.
 8. Run the doctor and open a few pages (admin, a server's console) before you leave it.
+
+Since Pelican rc.2, a plugin whose files throw a fatal error, or any error while the panel boots,
+is switched off with the status **crashed** and skipped until an admin enables it again in
+Admin › Plugins. The doctor's **Plugins load** check fails while one is. After an upgrade, check
+it and enable the plugin again once the cause is gone.
 
 ## Wings
 

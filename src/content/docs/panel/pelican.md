@@ -9,7 +9,7 @@ follows the same steps with what matters for plugged.host.
 
 ## Pick the version
 
-The plugins target **Pelican v1.0.0-rc.1**. Install that release, not `latest`, and only upgrade
+The plugins target **Pelican v1.0.0-rc.2**. Install that release, not `latest`, and only upgrade
 Pelican when the plugins' release notes say a newer version is supported: Pelican changes
 internal APIs between pre-releases and a mismatch shows up as errors on panel pages.
 
@@ -21,7 +21,7 @@ and Composer first. Then:
 ```bash
 sudo mkdir -p /var/www/pelican
 cd /var/www/pelican
-curl -L https://github.com/pelican-dev/panel/releases/download/v1.0.0-rc.1/panel.tar.gz | sudo tar -xzv
+curl -L https://github.com/pelican-dev/panel/releases/download/v1.0.0-rc.2/panel.tar.gz | sudo tar -xzv
 sudo COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader
 ```
 

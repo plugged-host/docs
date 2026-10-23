@@ -11,7 +11,7 @@ plugged.host runs Debian 13; anything Pelican supports works.
 | | |
 |---|---|
 | CPU and memory | 2 cores and 4 GB RAM to start. The queue worker, the scheduler and up to three Discord bots each run their own PHP process, so leave headroom. |
-| Pelican Panel | **v1.0.0-rc.1**, the version the plugins are built against. |
+| Pelican Panel | **v1.0.0-rc.2**, the version the plugins are built against. |
 | PHP | **8.5** (Pelican also accepts 8.4) with FPM and the extensions Pelican lists (`gd`, `mysql`, `mbstring`, `bcmath`, `xml`, `curl`, `zip`, `intl`, `sqlite3`), plus `pcntl`, `posix` and `openssl` for the Discord bots. `exec` must be allowed: the bots' supervisor and the panel's asset build use it. |
 | Database | MariaDB or MySQL. plugged.host runs MariaDB; the plugins are not tested on SQLite or PostgreSQL. |
 | Cache, sessions, queue | Redis, or the database drivers. Both work. |
