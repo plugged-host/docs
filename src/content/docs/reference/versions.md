@@ -3,6 +3,13 @@ title: Versions
 description: How a plugged.host release is numbered, where the version shows, and how agents follow it.
 ---
 
+:::note
+plugged.host Calagopus (v3) and its forks name a release by its version only: **`vMAJOR.MINOR.PATCH`**,
+for example `v3.0.0`. The panel is a compiled binary, so there is no commit part: every fix is a new
+version (`v3.0.1`), published as a GitHub release. The rest of this page describes the Pelican
+plugins (2.2), which are deprecated.
+:::
+
 One version names the whole release: **`vMAJOR.MINOR.PATCH.COMMIT`**, for example `v2.2.0.9c396e7`.
 
 | Part | Meaning |
