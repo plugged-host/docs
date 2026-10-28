@@ -1,13 +1,13 @@
 ---
 title: Credits, tokens and memberships
-description: The panel's two currencies, the Resource Store and its sales, the token-earning link providers, the two memberships with burst cores, and paid panel access.
+description: The panel's two currencies, the Resource Store and its sales, the CPX Research survey wall and the token-earning link providers, the two memberships with burst cores, and paid panel access.
 ---
 
 The economy lets users grow their allowance and pay for extras. **Credits** buy CPU, memory and disk in the Resource Store, for good. **Tokens**
-are earned by completing sponsored links and pay for the two **memberships**, restores of parked
-servers and, if you want, the panel itself. Users use Account › Resource Store, Account › Tokens
-and Account › Membership; admins set the prices and the link providers and can change any user's
-balances.
+are earned by taking surveys (CPX Research) or completing sponsored links and pay for the two
+**memberships**, restores of parked servers and, if you want, the panel itself. Users use Account ›
+Resource Store, Account › Tokens and Account › Membership; admins set the prices and the token
+providers and can change any user's balances.
 
 ## What it does
 
@@ -47,16 +47,18 @@ only, not the memberships.
 - The window is checked on every store visit and purchase: a price shown before the sale started
   or after it ended has moved, so that purchase is refused and the page shows the current prices.
 
-### Tokens and sponsored links
+### Tokens, surveys and sponsored links
 
 - Account › Tokens shows the balance, what tokens pay for, one row per way to earn (the reward,
-  today's count against the cap, and **Earn with ...**) and the recent token activity.
+  today's count against the cap, and **Earn with ...**) and the recent token activity. The
+  [CPX Research](#cpx-research) survey wall, when set up, is the first row, with the page's filled
+  button (**Take a survey**): it pays the most.
 - **Daily Tokens**, when above 0, are given once a day, the first time the account looks after
   midnight UTC.
 - Tokens also pay for [limbo](/starts/limbo/) restores and [subdomains](/servers/subdomains/)
   where those cost tokens.
 
-Earning a token works like this:
+Earning a token through a link works like this:
 
 1. **Earn with ...** opens a claim bound to the account and sends the user to the provider.
 2. The provider sends the user back to `https://panel.example.com/account/tokens?claim=...` with
@@ -71,6 +73,7 @@ Each provider's proof is checked its own way:
 
 | Provider | How the link is made | How the trip is proven |
 |---|---|---|
+| CPX Research | No link: **Take a survey** opens CPX Research's survey wall in a new tab, signed for the account (no username or email is sent) | CPX's servers call the panel's postback URL, signed with your Secure Hash ([below](#cpx-research)) |
 | Linkvertise, link | Your Linkvertise link, with `{return}` or `{return_b64}` replaced by the way back | Linkvertise's anti-bypass API, with your anti-bypass token |
 | Linkvertise, Full Script | The Tokens page loads Linkvertise's script, which turns the page's own earn link into a Linkvertise link | The same API |
 | Vylo, Cuty, ShrinkEarn, ShrinkMe, AdFoc.us | The panel asks the shortener's API for a short link for every trip, to the way back with a proof only the panel can make | The panel checks its own proof, which names the provider, and that the trip took at least **Shortest Trip** seconds |
@@ -89,30 +92,65 @@ Each provider's proof is checked its own way:
   Tokens page shows what the next link pays. Set Less per Further Link to 0 to pay every link in
   full.
 
+### CPX Research
+
+CPX Research is a survey wall, not a link: there is no claim and no way back. CPX works out what
+each survey pays in tokens from the **Currency Factor** set in its dashboard and shows it on the
+wall. When a survey is finished or taken back, CPX's servers call the panel's postback URL, and the
+panel pays or takes back the tokens. They usually arrive within minutes and show when the user
+comes back to the Tokens page.
+
+- The Tokens page's row says "Pays what each survey shows" and counts today's finished surveys
+  against the cap ("0 of 1 today").
+- **Only finished surveys count** toward **Surveys per Day** (days start at midnight UTC). A
+  screen-out's small bonus, and other bonuses CPX pays (for a rating, say), are paid and never use
+  up the day, so a user who is screened out can try another survey. A finished survey over the cap
+  is recorded and pays nothing.
+- A survey pays what CPX sends, at most 10 000 tokens per postback. A part of a token is saved on
+  the account like a link's. Tokens per Link and Less per Further Link do not apply.
+- **Reversals.** When CPX takes a survey back (for fraud found later, say), the panel takes back the
+  whole tokens it paid, never more than the balance: what was spent stays spent. A reversed survey
+  no longer counts toward its day, and a reversal that arrives before its credit makes the credit
+  pay nothing.
+- Each postback pays once: CPX sending the same one again adds nothing.
+- The panel refuses a postback (403) while Tokens or CPX Research is off, the App ID or Secure Hash
+  is missing, or its hash does not match.
+- The token history shows "Earned with CPX Research" and "Reversed: CPX Research"; a paid survey is
+  logged as `account:tokens.earn`.
+
 ### Memberships
 
-Two memberships, always the panel's own. Their names are settings (Plus and PlusPlus by default).
+Two memberships, always the panel's own. Their names are settings (Plus and Premium by default).
+Both are bought for a number of days at a time: buying again before one ends adds to the time left,
+and nothing renews by itself. Neither needs the other: the second gives everything the first does.
 
 | | First membership | Second membership |
 |---|---|---|
-| Bought with | tokens, once, kept for good | tokens or credits, for a number of days; needs the first; buying again adds to the time left |
+| Bought with | tokens, for First Membership: Days | tokens, or credits while Second Membership: Credits is above 0 |
 | Location tiers it opens | `plus` | `premium` and `plus` |
 | [Start queue](/starts/start-queue/) priority | ahead of everyone without one | ahead of the first membership |
 | Burst cores on every server | First Membership: Burst Cores (1) | Second Membership: Burst Cores (2), the total |
+| [Ads](/economy/ads/), while Fewer Ads for Members is on | only in the waiting rooms before a start: no banners, popups or in-game messages | none, and no waiting room |
+| Archives, unpacking and backups | faster, on the [Wings fork](/nodes/wings/) | faster still |
+| [Panel access](#panel-access) | included | included |
+| Idle servers ([limbo](/starts/limbo/)) | stopped, parked and deleted like everyone's, unless Spare Members is on | the same |
 
 - A location's tier is set on the location: Admin › Locations › a location › Tier. A location
   without a tier is open to everyone; a tier other than `plus` or `premium` stays closed to
   users. Admins place servers anywhere.
-- Account › Membership shows both memberships side by side, what each adds over the free tier, and
-  the buy buttons. Buying takes the tokens or credits and grants the membership in one step, or not
-  at all.
-- Memberships also change what [ads](/economy/ads/) a user sees, skip
-  [panel access](#panel-access) payments, and spare servers from [limbo](/starts/limbo/) while Spare
-  Members is on.
-- When a second membership runs out, every server of the account on a `premium` location is moved
-  to a location the owner may still use: the same country first, then `plus` locations. A full
-  location is tried again every minute until no server is left on a premium location. Buying again
-  before that stops the moves. See [moving servers](/servers/moving-servers/).
+- Account › Membership shows a note while one runs ("Premium is active, it runs until ..."), both
+  memberships side by side with a buy button per offer ("30 days · 15 tokens"), what each adds over
+  the free tier, and the questions users ask before buying. Buying takes the tokens or credits and
+  adds the days in one step, or not at all.
+- Memberships also raise [neo](/ai/neo/)'s usage limits and, while Members Only is on, give
+  [devboxes](/servers/devboxes/).
+- When a membership runs out, the account's servers on locations it opened are moved to a location
+  the owner may still use: off `premium` locations once the second has run out, and off `plus`
+  locations too once neither runs. The same country is tried first, then `plus` locations while the
+  first still runs, then the fastest. A full location is tried again every minute until no server
+  is left on a lost location; buying again before that stops the moves. The owner is notified
+  ("Premium has ended"), and burst cores drop to what is left. See
+  [moving servers](/servers/moving-servers/).
 
 ### Burst cores
 
@@ -124,6 +162,8 @@ node has CPU to spare: a game's startup or a busy evening runs faster without bu
   the paid CPU only.
 - Wings gets the paid limit plus 100 per burst core as the server's CPU limit, applied live to
   running servers right after a membership change (or within a minute, if that sync failed).
+- On the [Wings fork](/nodes/wings/), a server with burst cores also gets more threads for
+  archiving, unpacking and backups, so members' archives and backups finish faster.
 - The server card, the console's CPU card and the CPU graph show "paid + burst".
 
 ### Panel access
@@ -146,23 +186,28 @@ Resource Store, tokens to the Tokens page.
 
 Admin › Users › a user › Economy shows the user's credits, tokens, what was earned, both
 memberships, what the store sold and both histories. Add or take away credits and tokens with a
-reason the user sees, give or take the first membership, and set or end the second. A deduction may
-not take a balance below zero.
+reason the user sees, and set the end of either membership or end it now. A deduction may not take
+a balance below zero.
 
 Activity: `account:store.purchase`, `account:membership.plus`, `account:membership.plusplus`,
 `account:tokens.earn` for the user, `user:economy` for the admin.
 
 ## Requirements
 
-- An account at each link provider you turn on, and its API key (see [Setup](#set-up-the-link-providers)).
+- An account at each token provider you turn on, and its keys (see [Setup](#set-up-the-token-providers)).
 - The panel's URL (Admin › Settings › General › Application) set to its public `https://` address.
-  Every provider sends users back to it.
+  Every link provider sends users back to it, and CPX Research's postback URL is built from it.
+- For CPX Research, CPX's servers must reach `https://panel.example.com/api/earn/cpx-research`: a
+  proxy, CDN or firewall in front of the panel must let them through (CPX's dashboard lists the
+  addresses its postbacks come from).
 - Allowance limits in Admin › Settings › Hosting › Games for the Resource Store to sell anything
   (without noprofit.space).
 - Location tiers for the memberships to open anything.
 - Burst cores work on stock Wings. The [Wings fork](/nodes/wings/) also gives each container a CPU
-  weight from its paid limit alone, so paid CPU wins over burst when the node is busy, and leaves
-  burst out of the node's allocated CPU. On stock Wings every container weighs the same.
+  weight from its paid limit alone, so paid CPU wins over burst when the node is busy, leaves burst
+  out of the node's allocated CPU, and gives servers with burst cores the faster archives,
+  unpacking and backups. On stock Wings every container weighs the same and every server archives
+  at the same speed.
 
 ## Setup
 
@@ -179,12 +224,30 @@ Activity: `account:store.purchase`, `account:membership.plus`, `account:membersh
 2. Admin › Settings › Economy › Memberships: turn on **Memberships**, name them, and set their
    prices, days and burst cores. Save.
 
-### Set up the link providers
+### Set up the token providers
 
 Turn on **Tokens** in Admin › Settings › Economy › Tokens, then set up one or more providers in the
 same tab, under **Earning Tokens**. A provider's fields appear once its switch is on, and it shows
-on the Tokens page once its key is stored. Each one has **Tokens per Link** and **Links per Day**;
-the shorteners also have **Shortest Trip**.
+on the Tokens page once its key is stored. Each link provider has **Tokens per Link** and **Links
+per Day**; the shorteners also have **Shortest Trip**. CPX Research has **Surveys per Day** instead.
+
+**CPX Research**
+
+1. Create a publisher account at CPX Research (`cpx-research.com`) and add an app for the panel.
+2. In the app's **Reward Settings**, name the currency Token (plural Tokens) and set the **Currency
+   Factor**: the tokens a dollar of your earnings is worth. That is what the wall shows for each
+   survey and what it pays.
+3. Turn on **CPX Research**, and copy the App ID and the Secure Hash from the app's page into **CPX
+   Research App ID** and **CPX Research Secure Hash**. Set **Surveys per Day** and save.
+4. Click the **Postback URL** shown under the fields (it is copied) and paste it into the app's
+   **Postback Settings** at CPX Research. It looks like this; CPX fills in the `{...}` parts:
+
+   ```text
+   https://panel.example.com/api/earn/cpx-research?status={status}&trans_id={trans_id}&user_id={user_id}&amount_local={amount_local}&type={type}&ip_click={ip_click}&hash={secure_hash}
+   ```
+
+5. Check it with CPX's **Test postback** for your own account: the tokens show on your Tokens page,
+   and the same postback sent again adds nothing.
 
 **Linkvertise**
 
@@ -220,8 +283,8 @@ the shorteners also have **Shortest Trip**.
 4. Save. AdFoc.us refuses an encoded way back, so the panel puts its proof in the claim itself
    (`?claim=<claim>.<proof>`).
 
-Then, as a user, use **Earn with ...** for each provider, finish the link and check that the toast
-says tokens were added.
+Then, as a user, use **Earn with ...** for each link provider, finish the link and check that the
+toast says tokens were added.
 
 ### Panel access
 
@@ -292,6 +355,10 @@ Admin › Settings › Economy has three tabs for the economy. A tab saves only 
 
 | Setting | Default | What it does |
 |---|---|---|
+| CPX Research | off | Offers the survey wall, first on the Tokens page. Needs the App ID and the Secure Hash |
+| CPX Research App ID | empty | From the app's page in CPX Research's dashboard. Digits, up to 20 |
+| CPX Research Secure Hash | empty | From the same page. Stored encrypted |
+| Surveys per Day | 1 | Finished surveys that pay, per account. Screen-outs and bonuses are paid and do not count. 0 has no limit. Up to 1000 |
 | Linkvertise | off | Offers Linkvertise. Needs the anti-bypass token |
 | Linkvertise Anti-Bypass Token | empty | From Linkvertise's dashboard. Stored encrypted |
 | Linkvertise Publisher ID | empty | A number. Turns on the Full Script; without it the link below is used |
@@ -299,11 +366,13 @@ Admin › Settings › Economy has three tabs for the economy. A tab saves only 
 | Linkvertise Link | empty | An `https://` Linkvertise link to the panel with `{return}` or `{return_b64}`. Shown without a publisher ID |
 | Vylo, Cuty, ShrinkEarn, ShrinkMe, AdFoc.us | off | Offers that shortener. Needs its API key |
 | Vylo, Cuty, ShrinkEarn, ShrinkMe, AdFoc.us API Key | empty | From the provider's dashboard (AdFoc.us: Tools › API). Stored encrypted |
-| Tokens per Link | 1 | Per provider. Up to 2 decimals, 0.01 to 1000 |
-| Links per Day | 5 | Per provider and account. 0 has no limit. Up to 1000 |
+| Tokens per Link | 1 | Per link provider. Up to 2 decimals, 0.01 to 1000 |
+| Links per Day | 5 | Per link provider and account. 0 has no limit. Up to 1000 |
 | Shortest Trip (Seconds) | 10 | Shorteners only: a trip back faster than this does not count. 0 to 600 |
 
-A stored key or token shows "Stored. Leave empty to keep it."; type a new one to replace it.
+A stored key, token or Secure Hash shows "Stored. Leave empty to keep it."; type a new one to
+replace it. With CPX Research on, the tab also shows its **Postback URL** (click to copy) and what
+to set in CPX's Reward Settings.
 
 ### Memberships
 
@@ -311,12 +380,13 @@ A stored key or token shows "Stored. Leave empty to keep it."; type a new one to
 |---|---|---|
 | Memberships | on | The memberships and Account › Membership. Off hides the page; memberships are kept |
 | First Membership's Name | Plus | What users see. 1 to 32 characters |
-| Second Membership's Name | PlusPlus | What users see. 1 to 32 characters |
-| First Membership: Tokens | 25 | Its price, paid once |
-| Second Membership: Tokens | 10 | Its price in tokens |
-| Second Membership: Days for Tokens | 7 | How long that buys. 1 to 365 |
-| Second Membership: Credits | 150 | Its price in credits. 0 does not sell it for credits |
-| Second Membership: Days for Credits | 14 | How long that buys. 1 to 365 |
+| Second Membership's Name | Premium | What users see. 1 to 32 characters |
+| First Membership: Tokens | 15 | Its price in tokens |
+| First Membership: Days | 30 | How long that buys. 1 to 365 |
+| Second Membership: Tokens | 30 | Its price in tokens |
+| Second Membership: Days for Tokens | 30 | How long that buys. 1 to 365 |
+| Second Membership: Credits | 0 | Its price in credits. 0 does not sell it for credits |
+| Second Membership: Days for Credits | 30 | How long that buys. 1 to 365 |
 | First Membership: Burst Cores | 1 | CPU above each server's limit, 100 % per core. 0 to 16 |
 | Second Membership: Burst Cores | 2 | The total while it runs, not added to the first's. 0 to 16 |
 
@@ -328,7 +398,7 @@ Account permissions (API key scopes):
 |---|---|
 | `economy.read` | Viewing the account's credits, tokens, memberships and their history |
 | `economy.purchase` | Spending credits and tokens on resources, memberships and panel access |
-| `economy.earn` | Earning tokens through sponsored links |
+| `economy.earn` | Earning tokens through surveys and sponsored links |
 
 Admin role permission:
 
@@ -340,7 +410,7 @@ Admin role permission:
 
 | Task | Runs | Does |
 |---|---|---|
-| `settle_memberships` | every minute | Moves the servers of lapsed second memberships off `premium` locations, and brings every account's burst cores in line with its memberships and the settings |
+| `settle_memberships` | every minute | Moves the servers of a lapsed membership off the locations it opened, and brings every account's burst cores in line with its memberships and the settings |
 
 Background tasks run only on the panel instance with `APP_PRIMARY=true`.
 
@@ -354,8 +424,8 @@ or set up a link provider or Daily Tokens, before users sign in.
 
 - Turning Credits, Tokens or Memberships off hides their pages. Balances and memberships are kept
   and come back when you turn them on again.
-- Opening links is throttled per account and provider: three times Links per Day per hour, at
-  least 5.
+- Opening links and the survey wall is throttled per account and provider: three times Links per
+  Day (or Surveys per Day) per hour, at least 5.
 - With the defaults (1 token per link, 15 % less per further link), the second link of the day pays
   0.85 tokens. Raise Tokens per Link or set Less per Further Link to 0 if that is not what you want.
 - AdFoc.us needs a way back that needs no encoding: keep the panel's URL to letters, digits and
@@ -363,6 +433,11 @@ or set up a link provider or Daily Tokens, before users sign in.
 - A shortener that does not answer within 8 seconds, or answers without a link, makes no link; the
   user gets an error and can try again.
 - Changing burst cores in the settings reaches every account within a minute, without a restart.
+- Before 3.0.4 the first membership was bought once and kept for good. Upgrading to 3.0.4 gives
+  every account that had it 14 more days from the upgrade, sets the membership prices and days back
+  to the defaults above (the old values priced a one-off purchase), renames a second membership
+  still called PlusPlus to Premium, and turns Spare Members off in [limbo](/starts/limbo/). Check
+  Admin › Settings › Economy › Memberships afterwards.
 - With [noprofit.space](/accounts/noprofit/) connected, credits are the account's noprofit.space
   credits and the Resource Store is noprofit.space's (its catalog, prices and history); Starting
   Credits and the Prices settings are not used, sales still apply. An admin's credit change is sent

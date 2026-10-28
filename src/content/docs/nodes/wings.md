@@ -21,6 +21,7 @@ and skip a node without it. The table below says what a stock node misses.
 | Removing a server the panel no longer lists on the node (`POST /api/system/orphans`) | [Node failover](/nodes/failover/), once the old node is back | The old copy's files stay on the node |
 | A schedule's restart step leaves a stopped server stopped | [Start gates](/starts/start-gates/) | A scheduled restart could start a stopped server past the gates |
 | CPU weight and burst per container (`build.cpu_weight`, `build.cpu_burst`) | [Burst cores](/economy/credits-and-tokens/) | Burst works, but every container weighs the same |
+| More threads for archiving, unpacking and backups of servers with burst CPU, and large zip entries compressed in parallel (`api.burst_operations`, on by default) | [Memberships](/economy/credits-and-tokens/#memberships): faster archives and backups for members | Every server archives and backs up with the node's configured threads |
 | A `.jar` browsed like a `.zip` | [Minecraft](/games/minecraft/): identifying a plugin or mod without downloading it | Jars are identified by their hash only |
 
 Install everything else about a node as upstream describes:

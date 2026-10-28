@@ -16,10 +16,12 @@ until a zone, a tag or a sponsored banner exists.
 | Who | Ads |
 |---|---|
 | Accounts with the second membership, while Fewer Ads for Members is on | none, and no waiting room |
-| Accounts with the first membership (with memberships on) | all, refreshed after Refresh for Members instead of Refresh After; no Vignette unless Vignette for the First Membership is on |
+| Accounts with the first membership, while Fewer Ads for Members is on | only the waiting rooms before a start (the start waiting room and the start queue page), with their units refreshed after Refresh for Members; no slot on any other page, no Social Bar, Popunder, Waiting Room Zone, In-Page Push or Vignette, and no ad blocker notice |
+| Accounts with either membership, while Fewer Ads for Members is off | all, refreshed after Refresh for Members instead of Refresh After; no Vignette unless Vignette for the First Membership is on |
 | Everybody else, admins included | all |
 
-Admin pages never show ads. Dashboard pages and server pages each have their own switch. See
+In-game messages skip every account with a membership, whatever Fewer Ads for Members says. Admin
+pages never show ads. Dashboard pages and server pages each have their own switch. See
 [memberships](/economy/credits-and-tokens/).
 
 ### Slots
@@ -131,6 +133,7 @@ the first zone's host that fails. Then, by **How**:
 | Block | a dialog that stays until the blocker is off and the page reloaded |
 
 The console never asks while Not on the Console is on, and a parked server's page never does.
+Accounts with the first membership are never asked while Fewer Ads for Members is on.
 
 ### In-game messages
 
@@ -196,14 +199,14 @@ Admin › Settings › Ads has one tab per part. A tab saves only its own fields
 | Show Ads | off | Turns ads on. Nothing shows until a zone, a tag or a sponsored banner exists |
 | On the Dashboard | on | The server list, the account pages, Create Server and the store |
 | On Server Pages | on | A server's console and its other pages |
-| Fewer Ads for Members | on | The second membership sees no ads; the first membership's ads refresh slower |
+| Fewer Ads for Members | on | The second membership sees no ads; the first sees only the waiting rooms before a start, no banners or popups. Off: members see every ad, refreshing slower |
 | Top Banner | on | The sponsored top banners above every page |
 | Server Pages Strip | on | A 468×60 or 320×50 banner under a server page's header, not on the console |
 | Page Rectangles | on | A 300×250 banner on Create Server, the store and the server list |
 | Page Foot | on | A leaderboard and the native unit at the foot of every page |
 | Units per Page | 2 | The most units the strip and the rectangles fill together on one page. 0 fills none. Up to 20 |
 | Refresh After (Seconds) | 5 | A unit with an ad reloads after this long in view. 0 never. Up to 3600 |
-| Refresh for Members (Seconds) | 10 | The same for the first membership, never shorter than the above. 0 never |
+| Refresh for Members (Seconds) | 10 | The same for members who see ads, never shorter than the above. 0 never |
 
 ### Adsterra
 
@@ -229,7 +232,7 @@ Admin › Settings › Ads has one tab per part. A tab saves only its own fields
 | Vignette Zone | empty | The zone id from the Vignette tag. Empty: off |
 | Vignette Script | empty | The script URL from the same tag |
 | Minutes Between Vignettes | 10 | Per browser. 0: on every page load. Up to 1440 |
-| Vignette for the First Membership | off | Off: members never get the Vignette |
+| Vignette for the First Membership | off | Off: members never get the Vignette. Only matters while Fewer Ads for Members is off |
 | Site Verification | empty | Monetag's verification code, put into every page's head |
 
 Monetag never loads on the console or in the waiting rooms.

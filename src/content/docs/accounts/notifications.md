@@ -38,7 +38,7 @@ notifications is not written to the activity log.
 | Move failed | The owner and whoever asked; nobody for a move an admin started | A move gave up: the server stayed, with the reason when the panel knows it |
 | Move failed: {server} | Every admin, and every user whose role has `servers.transfer` | Any move gave up, with the reason or the error |
 | Your servers have fewer resources now | The account | An [allowance cut](/servers/allowance-cuts/) took CPU, memory or disk off its servers: each server with what it gave |
-| {membership} has ended | The account | The second membership ran out and servers on premium locations are moving ([Credits and tokens](/economy/credits-and-tokens/)) |
+| {membership} has ended | The account | A membership ran out and servers on locations it opened are moving ([Credits and tokens](/economy/credits-and-tokens/)) |
 | Server recovered / Server moved to another node | The owner | A [failover](/nodes/failover/) or a drill restored the server on another node: the new address and the time of the backup used |
 | Server node issue | The owner, at most once a day per server, and only when the server had already left its node | A failover failed |
 | Modpack installed / Modpack installation failed | Whoever started it (on the Modpacks page or through neo) | A modpack install ended ([Minecraft](/games/minecraft/)) |

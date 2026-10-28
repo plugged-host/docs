@@ -24,7 +24,9 @@ The `settle_limbo` task runs once a minute while limbo is on and looks at server
 
 - not suspended, not busy (installing, restoring) and not being moved;
 - not owned by an admin;
-- not owned by an account with a membership, while Spare Members and memberships are on;
+- not owned by an account with a membership, while Spare Members and memberships are on (Spare
+  Members is off by default: members' idle servers are stopped, parked and deleted like
+  everyone's);
 - not a [devbox](/servers/devboxes/)'s own server;
 - not parked already, and not failed to park in the last day.
 
@@ -139,7 +141,7 @@ Server activity: `server:limbo.stop`, `server:limbo.parking`, `server:limbo.park
 | Stop After (Minutes) | 2880 | A running server nobody used for this long is stopped. 1 to 525600 |
 | Park After (Minutes) | 4320 | A stopped server nobody used for this long is backed up and removed from its node. 1 to 525600 |
 | Servers per Minute | 3 | How many servers are stopped, and how many are parked, each minute at most. 1 to 100 |
-| Spare Members | on | Servers of accounts with a membership are never stopped or parked |
+| Spare Members | off | On: servers of accounts with a membership are never stopped or parked. Off: they are stopped, parked and deleted like everyone's |
 | Delete After (Days) | 0 | A server parked this long is deleted with its files. 0 never deletes. Up to 3650 |
 
 ### Restoring
@@ -172,6 +174,8 @@ deleted servers' hold, for as long as Admin › Settings › Hosting › Recover
 :::
 
 - A parked server still counts against its owner's allowance: it keeps its resources.
+- Upgrading to 3.0.4 turns Spare Members off, whatever it was set to. Turn it on again if members'
+  idle servers should keep running.
 - Changing an account's CPU (burst cores, an [allowance cut](/servers/allowance-cuts/)) fails for
   its parked servers; the change applies when they are restored.
 - Parked servers stay on their node in the panel, so deleting that node needs them moved or deleted
