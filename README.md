@@ -11,20 +11,39 @@ fork [plugged-host/wings](https://github.com/plugged-host/wings), plus the statu
   `src/content/docs/`, the sidebar is in `astro.config.mjs`.
 - **The panel's look**: `src/styles/theme.css` maps the v3 panel's Theme v2 tokens onto
   Starlight's variables, dark only like the panel; the fonts are self-hosted in `public/fonts/`.
-- **Hosting:** a Cloudflare Worker with static assets only (`wrangler.jsonc`, no Worker script).
-  Workers Builds runs `npm run build` and deploys `dist/` with `npx wrangler deploy` on every push
-  to `main`. `scripts/headers.mjs` writes `dist/_headers` after the build: security headers and a
-  Content Security Policy with the hashes of the few inline scripts Starlight emits.
-  `public/_redirects` sends the addresses of removed pages to their replacements.
+- **Hosting:** the Cloudflare Worker `docs-plugged`, static assets only (`wrangler.jsonc`, no
+  Worker script). `npm run build` writes `dist/`, then `scripts/headers.mjs` writes
+  `dist/_headers`: security headers and a Content Security Policy with the hashes of the few inline
+  scripts Starlight emits. Only `dist/` is uploaded. `public/_redirects` sends the addresses of
+  removed pages to their replacements.
 
 ## Working on it
 
 ```bash
 npm ci
-npm run build     # static site in dist/
+npm run build     # static site in dist/ (git-ignored)
 ```
 
 Node.js 22 or newer (`.node-version` says 26). How to write pages: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Deploy and roll back
+
+Pushing to `main` deploys: Workers Builds runs `npm run build` and `npx wrangler deploy`. A build
+that fails leaves the previous version online.
+
+Roll back by reverting the commit and pushing. In a hurry, Cloudflare's dashboard (Workers &
+Pages › `docs-plugged` › Deployments) rolls back to an earlier version at once; push the revert
+afterwards so `main` matches what is served.
+
+No secrets and no settings: the site is static.
+
+## Related
+
+- The panel's own developer docs (architecture, one page per feature) are in the panel repository's
+  [docs/](https://github.com/plugged-host/panel/tree/main/docs); these pages are for people running
+  a panel.
+- [plugged-host/site](https://github.com/plugged-host/site) and
+  [plugged-host/status](https://github.com/plugged-host/status): plugged.host and its status page.
 
 ## Security
 
