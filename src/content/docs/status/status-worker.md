@@ -5,14 +5,14 @@ description: Run the status page and its out-of-band prober on Cloudflare Worker
 
 [plugged-host/status](https://github.com/plugged-host/status) is a static status page plus a
 Cloudflare Worker. Once a minute the Worker probes your website, the panel's `/up` and every node's
-Wings port from Cloudflare's network, fetches the panel's [export](/status/status-export/) for what
+Wings port from Cloudflare's network, fetches the panel's [status data](/status/status-page/) for what
 only the panel knows (load, incidents, maintenance), merges the two and serves the result at
 `/data/*.json` and `/feed.xml`. When the panel is unreachable the page says **Panel: offline**
 instead of going blank, and nodes show the Worker's own verdict.
 
 The Worker always shows a Website and a Panel row from its own probes (`SITE_URL`,
-`PANEL_HEALTH_URL`), even when the panel's export leaves them out because their health URLs are
-empty there.
+`PANEL_HEALTH_URL`), even when the panel's data leaves them out because its Website URL or Panel
+URL is empty.
 
 Everything runs on the Workers Free plan: a Cron Trigger, a SQLite-backed Durable Object
 (`StatusMonitor`) that keeps the state, and static assets for the page.
@@ -23,7 +23,7 @@ Fork the repository, then change:
 
 | File | What to change |
 |---|---|
-| `wrangler.jsonc` | `name` (your Worker's name), and the `vars`: `PANEL_URL` (base of the export, `https://panel.example.com`), `PANEL_HEALTH_URL` (`https://panel.example.com/up`), `SITE_URL` (your website), `RSS_BASE_URL` (the status page's own URL), `MONITOR_LOCATION` (a Durable Object location hint near your panel and nodes, e.g. `weur`, `enam`). |
+| `wrangler.jsonc` | `name` (your Worker's name), and the `vars`: `PANEL_URL` (base of the panel's `/data/` files, `https://panel.example.com`), `PANEL_HEALTH_URL` (`https://panel.example.com/up`), `SITE_URL` (your website), `RSS_BASE_URL` (the status page's own URL), `MONITOR_LOCATION` (a Durable Object location hint near your panel and nodes, e.g. `weur`, `enam`). |
 | `wrangler.jsonc` `services` | The `SITE` binding names plugged.host's website Worker. Point it at your own website Worker, or delete the block if you don't have one (the site is then probed over its public URL only). |
 | `index.html` | The name, logo, links and the `status-origin` meta tag (the panel URL the page falls back to when its own `/data/` fails). |
 | `_headers` | `connect-src` in the Content Security Policy: your panel's and website's origins instead of plugged.host's. |
@@ -47,12 +47,13 @@ From then on every push to `main` deploys. To deploy from your machine instead: 
 `npx wrangler deploy`.
 
 Right after the very first deploy, `/data/*` can answer 502 for a few seconds until the first tick
-has stored data; the page falls back to the panel's export meanwhile.
+has stored data; the page falls back to the panel's own `/data/` meanwhile.
 
 ## Requirements on your side
 
-- The panel's export is reachable at `PANEL_URL/data/` with CORS (the [nginx vhost](/panel/web-server/)
-  does this).
+- The panel's status data is on: Admin › Settings › General › Status Page › Enable the Status
+  Page. The panel then serves `PANEL_URL/data/*.json`, `targets.json` (the nodes to probe) and
+  `feed.xml` itself, with CORS ([status page](/status/status-page/)).
 - **Node names are not proxied by Cloudflare.** Workers can't open TCP connections to Cloudflare's
   own addresses, so a proxied node would always look down.
 - If you have a website Worker that shows status, deploy the status Worker first: the website's

@@ -3,72 +3,75 @@ title: Introduction
 description: What a plugged.host panel is made of, what runs where, and what these docs cover.
 ---
 
-A plugged.host panel is [Pelican Panel](https://pelican.dev) with the plugged.host plugins in its
-`plugins/` directory. Pelican's own code stays exactly as released: everything plugged.host adds
-hooks into the panel the way Pelican plugins are meant to. That keeps upgrades simple and keeps
-the panel's AGPL-licensed source untouched.
+plugged.host runs on its own panel: a fork of [Calagopus](https://calagopus.com), the open-source
+game-server panel written in Rust (Axum) with a React (Mantine) frontend. plugged.host's features
+are written straight into the panel's source, as if Calagopus had always had them, and its nodes
+run a matching fork of Calagopus Wings. Both are MIT licensed and public:
 
-The plugins run [plugged.host](https://plugged.host) in production. They are written for
-plugged.host first, so expect its opinions (free plans, credits, ads, its look) rather than a
-general-purpose product. Most of them can be switched off, and most behaviour is a setting.
+- Panel: [plugged-host/panel](https://github.com/plugged-host/panel)
+- Wings: [plugged-host/wings](https://github.com/plugged-host/wings)
+
+These docs explain how to run a panel like plugged.host with them: installing it, connecting nodes,
+and setting up each feature plugged.host adds. Everything the fork leaves as Calagopus has it
+(eggs and nests, locations, databases, backups, mail, OAuth, the API) is covered by the
+[Calagopus documentation](https://calagopus.com/docs); these pages link there instead of repeating
+it.
+
+The fork is written for plugged.host first, a free host for game servers and bots, so expect its
+opinions: free allowances, credits and tokens, ads, start queues, idle servers parked away. Almost
+all of it is a setting, and the features that need an outside service are off until you configure
+them.
 
 ## What runs where
 
 | Piece | Where it runs | Code | Guide |
 |---|---|---|---|
-| Panel: Pelican and the plugins, the queue worker and the scheduler | the panel box | [plugged-host/plugins](https://github.com/plugged-host/plugins) | [Panel](/panel/pelican/) |
-| Discord bots (rux, which is also the membership bot, and neo) | the panel box, started by the scheduler | `plugged-host-discord`, `plugged-host-ai` | [Discord and AI](/discord/membership-bot/) |
-| Wings and the abuse agent | every game node | Wings from Pelican, the agent from `plugged-host-abuse` | [Nodes](/nodes/wings/) |
-| Storage agent: mirrors of every server, failover archives | a storage box (and optionally a backup server) | `plugged-host-storage/agent` | [Storage and failover](/storage/storage-box/) |
-| FiveM image | pulled by nodes from GitHub's container registry | `plugged-host-fivem/image` | [FiveM image](/nodes/fivem-image/) |
-| Status page and its prober | Cloudflare Workers | [plugged-host/status](https://github.com/plugged-host/status) | [Status page](/status/status-worker/) |
-| Website | Cloudflare Workers | [plugged-host/site](https://github.com/plugged-host/site) | [Website](/status/website/) |
+| The panel: one binary, `panel-rs`, with the web frontend built in | the panel box, behind nginx | [plugged-host/panel](https://github.com/plugged-host/panel) | [Install the panel](/panel/install/) |
+| PostgreSQL and Redis (or Valkey) | the panel box, or anywhere the panel reaches | upstream | [Database and Redis](/panel/database/) |
+| Background tasks and the Discord bots | inside the panel process (the instance with `APP_PRIMARY=true`) | the panel | [Configuration](/panel/configuration/) |
+| Wings (wings-rs), the node daemon that runs the containers | every node | [plugged-host/wings](https://github.com/plugged-host/wings) | [Wings](/nodes/wings/) |
+| Status page and its outside prober (optional) | Cloudflare Workers | [plugged-host/status](https://github.com/plugged-host/status) | [Status Worker](/status/status-worker/) |
+| Website (optional) | Cloudflare Workers | [plugged-host/site](https://github.com/plugged-host/site) | [Website](/status/website/) |
 
-The smallest useful setup is one panel box and one node. The storage box, the Discord bots,
-neo and the status page are all optional and can be added later.
+The smallest useful setup is one panel box and one node. There is no queue worker, scheduler, cron
+job or node agent to install: the panel runs its own background tasks, and the Wings fork answers
+everything the panel asks of a node.
 
-## The plugins
+## What the fork adds
 
-Sixteen first-party plugins, plus three third-party ones shipped in the same repository. Core is
-required by all the others; each plugin's page lists what else it needs.
-
-| Plugin | What it does |
+| Area | Features |
 |---|---|
-| [Core](/plugins/core/) | The platform: suspension, account deletion, hardening, error pages, node telemetry, the release version, and the hooks the others share |
-| [Servers](/plugins/servers/) | Self-service server creation, plans, locations, transfers, node balancing |
-| [Economy](/plugins/economy/) | Credits, tokens, Plus, the stores and resource plans |
-| [Minecraft](/plugins/minecraft/) | Onboarding, Modrinth/CurseForge/Spigot, installed-jar detection, worlds, Geyser |
-| [FiveM](/plugins/fivem/) | `server.cfg` form, txAdmin frameworks, players, artifacts with auto-update |
-| [Devbox](/plugins/devbox/) | VS Code next to a game server, over SSH or in the browser |
-| [Limbo](/plugins/limbo/) | Hibernates idle servers and brings them back on demand |
-| [Queue](/plugins/queue/) | A start queue when a node is full |
-| [Ads](/plugins/ads/) | Ad units, sponsored banners and the ad-funded start room |
-| [Storage](/plugins/storage/) | Off-node mirrors, automatic node failover, the backups portal |
-| [Abuse](/plugins/abuse/) | File, startup and console scans, a CPU watch and a node agent |
-| [Status](/plugins/status/) | Incidents, maintenance and the status page export |
-| [Discord](/plugins/discord/) | Discord membership, invite and boost rewards, the bot framework |
-| [AI](/plugins/ai/) | neo, the assistant in the panel and on Discord, and rux, the moderation bot |
-| [noprofit.space](/plugins/noprofit/) | Optional link to noprofit.space accounts; turn it off on your own panel |
-| [Theme v2](/plugins/theme-v2/) | The look |
-| [Third-party](/plugins/third-party/) | `announcements`, `subdomains`, `mclogs-uploader` |
+| Nodes | [Node telemetry](/nodes/telemetry/) every minute, [placement](/nodes/placement/) by real load with an automatic deployment pause, [allocations](/nodes/allocations/) made on demand, [node failover](/nodes/failover/) from off-node backups |
+| Servers | Self-service [server creation](/servers/create-server/) within an allowance, [server settings](/servers/server-settings/) for users (resize, switch software, SFTP), [custom startup commands](/servers/startup-commands/), [moving servers](/servers/moving-servers/) between locations, [allowance cuts](/servers/allowance-cuts/), the [backups page](/servers/backups/), [subdomains](/servers/subdomains/), [server chat](/servers/server-chat/), [VS Code devboxes](/servers/devboxes/) |
+| Starting servers | [Start gates](/starts/start-gates/), the [start queue](/starts/start-queue/), [limbo](/starts/limbo/) for idle servers |
+| Games | [Minecraft](/games/minecraft/) pages (mods and plugins, worlds, players, modpacks, Bedrock), [FiveM](/games/fivem/) pages (server.cfg, frameworks, artifacts) |
+| Accounts | [Admin › Users](/accounts/admin-users/), [notifications](/accounts/notifications/), the [welcome tour](/accounts/welcome-tour/), [reviews](/accounts/reviews/), [languages](/accounts/languages/), the optional [noprofit.space](/accounts/noprofit/) connection |
+| Economy and ads | [Credits, tokens and memberships](/economy/credits-and-tokens/), [ads](/economy/ads/), the [partner program](/economy/partners/) |
+| Safety | [Abuse protection](/safety/abuse/), [account standing](/safety/standing/), [suspension details](/safety/suspension/) |
+| Discord and AI | [Discord integration](/discord/integration/), the [rux](/discord/rux/) moderation bot, the [neo](/ai/neo/) assistant and [neo on Discord](/ai/neo-discord/) |
+| Operations | The [status page](/status/status-page/) data, the Health page ([troubleshooting](/panel/troubleshooting/)), [releases](/reference/versions/), the panel's look ([branding](/panel/branding/)) |
 
-## What these docs don't cover
+## What the fork removes
 
-- **noprofit.space.** plugged.host signs users in through noprofit.space, a separate,
-  closed-source account service. The `plugged-host-noprofit` plugin connects the two. You don't
-  need it: with that plugin disabled, every plugin falls back to the panel's own sign-in, plans
-  and credits, and that is the setup described here.
-- **plugged.host's own machines.** How plugged.host itself is hosted (its fleet, its two-box
-  panel, its hardware) is not part of these docs. Examples use placeholders such as
-  `panel.example.com` and `node1.example.com`.
-- **Pelican itself.** Installing Pelican and Wings is covered by
-  [Pelican's documentation](https://pelican.dev/docs); these pages only add what plugged.host
-  needs on top.
+Some Calagopus features are hidden and their permissions never granted, so they cannot be used:
+devices (Docker device passthrough), mounts, the extension manager, the update checker, the
+private network ("Connections"), the server firewall, managed database instances (database
+agents) and backup groups. Classic database hosts stay. Telemetry to calagopus.com is off by
+default and stays a switch in Admin › Settings › General › Application.
 
-## Licence
+## Off until you turn it on
 
-The plugins are MIT-licensed, © noprofit.space. The three third-party plugins keep their own
-GPL-3.0 licence. Pelican Panel is a separate project under AGPL-3.0. Give your panel its own name
-and logo: the [site](https://github.com/plugged-host/site) and
-[status](https://github.com/plugged-host/status) repositories state that the plugged.host name and
-logo are not covered by their licence.
+| Feature | Needs |
+|---|---|
+| [noprofit.space](/accounts/noprofit/) sign-in and accounts | plugged.host's own account service; leave it off |
+| [Status page](/status/status-page/) data | Admin › Settings › General › Status Page |
+| [Discord](/discord/integration/), [rux](/discord/rux/), [neo on Discord](/ai/neo-discord/) | Discord applications and bot tokens |
+| [neo](/ai/neo/) | an AI provider's API key |
+| [Ads](/economy/ads/) and sponsored links for [tokens](/economy/credits-and-tokens/) | accounts with the ad and link networks |
+| [Subdomains](/servers/subdomains/) | a Cloudflare zone and API token |
+| [Reviews](/accounts/reviews/) | a review page of your own |
+| [Welcome tour](/accounts/welcome-tour/) | nothing, it is a switch |
+
+## Where to go next
+
+Read the [requirements](/start/requirements/), then follow the [install order](/start/install-order/).

@@ -1,40 +1,55 @@
 ---
 title: Install order
-description: The steps from an empty server to a working panel, in the order that works.
+description: The order to set up a plugged.host panel in, from an empty server to the optional features.
 ---
 
-Each step only needs the ones before it. Stop after step 4 for a working panel with one node;
-add the rest when you need them.
+Each step has its own page. Do them in this order: later steps assume the earlier ones work.
 
-1. **Pelican.** Install the panel at the version the plugins target and finish its installer.
-   [Install Pelican](/panel/pelican/)
-2. **The plugins.** Clone them into `plugins/`, turn off the ones you don't use, run the
-   migrations and rebuild the assets. [Install the plugins](/panel/plugins/)
-3. **Web server, queue worker, scheduler.** The nginx vhost, the queue worker service and the
-   cron line. Without the last two, nothing periodic or queued happens.
-   [Web server](/panel/web-server/), [Queue worker and scheduler](/panel/queue-and-scheduler/)
-4. **A node.** Install Wings, create the node in the panel, give it a location and a deployment
-   tag so the servers plugin places servers on it. [Wings nodes](/nodes/wings/)
-5. **Settings and eggs.** Go through each plugin's settings: plans and credits, the servers
-   plugin's locations, Minecraft API keys, status export. With the game plugins enabled, import
-   the Minecraft egg the servers plugin's catalog expects (`plugged-host:minecraft-setup`) and
-   put your FiveM egg on the FiveM image (`plugged-host:fivem-setup`).
-   [Configuration](/panel/configuration/),
-   [Minecraft](/plugins/minecraft/#setup), [FiveM](/plugins/fivem/#setup)
-6. **Check.** `plugged-host:doctor` lists every plugin, what it is missing, and runs each
-   plugin's health checks. [Doctor](/panel/doctor/)
-7. **Abuse agent** on every node. [Abuse agent](/nodes/abuse-agent/)
-8. **Storage box**, then authorize its key on every node; optionally a backup server.
-   [Storage box](/storage/storage-box/), [Backup server](/storage/backup-server/)
-9. **Discord**: neo's AI providers and rux, then the membership bot (rux, or a bot of its own),
-   then neo on Discord.
-   [rux](/discord/rux/), [Membership bot](/discord/membership-bot/), [neo](/discord/neo/)
-10. **Status page** on Cloudflare, fed by the panel's export.
-    [Status export](/status/status-export/), [Status Worker](/status/status-worker/)
+## The panel
 
-Run the doctor again after each step: it says what the step left undone.
+1. **[Database and Redis](/panel/database/)**: a PostgreSQL database and role, and a Redis (or
+   Valkey) database number for the panel.
+2. **[Install the panel](/panel/install/)**: the release binary (or [your own build](/panel/building/)),
+   the environment file, the system user and the systemd unit. Start it on the loopback address.
+3. **[First admin](/panel/first-admin/)**: create the admin from the command line, sign in on the
+   loopback port or a tunnel, set the application URL.
+4. **[Web server](/panel/web-server/)**: nginx with TLS in front of the panel. Only now open the
+   site to the world.
+5. **[Configuration](/panel/configuration/)**: mail, captcha, and the Admin › Settings pages that
+   matter on day one.
 
-```bash
-cd /var/www/pelican
-sudo -u www-data php artisan plugged-host:doctor
-```
+:::caution
+Don't expose the panel before an admin exists. With an empty users table, the first visitor gets
+the setup screen and becomes the admin.
+:::
+
+## The first node
+
+6. **Locations and a node** in the panel (Admin › Locations, Admin › Nodes), as upstream.
+7. **[Wings](/nodes/wings/)** on the node: the plugged.host fork, enrolled with the node's code and
+   always started with `--config`.
+8. **[Eggs](/nodes/eggs/)**: import the eggs your users should get.
+9. **[Node telemetry](/nodes/telemetry/)** shows the node answering within a minute. Check
+   Admin › Overview › Health.
+
+At this point admins can create servers. The rest decides what users can do on their own.
+
+## Self-service
+
+10. **[Creating servers](/servers/create-server/)**: games, plans and the allowance in
+    Admin › Settings › Hosting › Games and Admin › Plans.
+11. **[Placement](/nodes/placement/)** and **[allocations](/nodes/allocations/)**: where new servers
+    go and which ports the panel may make.
+12. **Off-node backups**: a backup storage that is not on the node, so
+    [node failover](/nodes/failover/) and [limbo](/starts/limbo/) have something to restore from.
+
+## Optional, in any order
+
+- [Start queue](/starts/start-queue/) and [limbo](/starts/limbo/)
+- [Credits, tokens and memberships](/economy/credits-and-tokens/), [ads](/economy/ads/)
+- [Minecraft](/games/minecraft/) and [FiveM](/games/fivem/) settings
+- [Subdomains](/servers/subdomains/) (Cloudflare)
+- [Abuse protection](/safety/abuse/) (reports by default; choose whether it suspends)
+- [Discord integration](/discord/integration/), [rux](/discord/rux/), [neo](/ai/neo/)
+- [VS Code devboxes](/servers/devboxes/)
+- [Status page](/status/status-page/) data, then the [status Worker](/status/status-worker/)

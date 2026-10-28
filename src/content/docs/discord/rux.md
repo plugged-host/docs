@@ -1,235 +1,272 @@
 ---
 title: rux
-description: Set up rux, the Discord moderation and giveaway bot of plugged-host-ai, with its application, permissions, role order and the people it takes orders from.
+description: Set up rux, the Discord moderation bot that takes orders in plain words, runs giveaways of credits and checks members' messages for spam and broken rules.
 ---
 
-rux is the moderation and giveaway bot of [plugged-host-ai](/plugins/ai/). Admins give it orders
-in plain language, slang and typos included, by DM, by @mentioning it or by starting a message
-with "hey rux":
+rux is the panel's moderation and toolbox bot on Discord. Admins tell it what to do in plain words,
+by DM, by @mentioning it or with "hey rux": warn, time out or ban someone, run a giveaway of
+credits, set a standing rule, watch a channel. Members of the roles admins make rux moderator
+roles can have it moderate their server. rux also checks members' messages by itself: spam without
+AI, and watched channels and standing rules with the AI. Admins set it up in Admin › Settings ›
+Accounts › rux; Discord members only see what it posts.
 
-> hey rux, make a giveaway that ends on the 4th at 5pm for 500 credits, dont let the last 2 winners join
+> hey rux, make a giveaway of 500 credits for 2 winners that ends Friday at 18:00
 
 > if anyone asks for new locations, warn them
 
 > @Helpers can help with moderation, give them mod permissions
 
-rux posts the giveaway with an **Enter** button and draws it at the end time, turns the second
-order into a standing rule it enforces from then on, and makes the Helpers role a rux moderator
-role. It is a moderation and toolbox bot, not a support bot: [neo](/discord/neo/) answers
-questions.
+## What it does
 
-## What you need
+### Who rux obeys
 
-- plugged-host-ai enabled with its tables (`sudo -u www-data php artisan migrate` in
-  `/var/www/pelican`).
-- **neo's AI providers set up** ([neo, step 1](/discord/neo/#1-add-an-ai-provider)). rux calls
-  the same providers directly, in the same order with the same failover. Its use counts against
-  the providers' keys, never against anyone's neo limits; neo does not have to be switched on.
-- [plugged-host-economy](/plugins/economy/) enabled, if giveaways and credit gifts should pay.
-  Winners are paid in its credits; without it they stay pending.
-- A panel with `APP_ENV=production`. rux has no override: it never runs on a dev panel.
-- The PHP CLI requirements and the scheduler of the
-  [membership bot](/discord/membership-bot/#before-you-start). rux uses its supervisor.
+- **Admins**: Discord accounts linked to a panel admin (an account with the admin flag, not
+  suspended or frozen) through the Discord Sign-in provider of
+  [the Discord integration](/discord/integration/). Every tool, on every server rux works on.
+- **Moderators**: members of a role an admin made a rux moderator role. The moderation tools only,
+  only on that role's server, and never on staff.
+- **Staff**: the server's owner, anyone whose roles may kick, ban, time out, manage messages or
+  manage the server, and every rux moderator. Standing rules, watched channels and the spam check
+  leave staff alone.
 
-## 1. Create the application
+Moderator and staff are per server: a moderator of one server is nobody special on another. rux
+ignores everyone else; in DMs it tells them once an hour that they are not allowed.
 
-1. In the [Discord Developer Portal](https://discord.com/developers/applications), create a
-   **New Application**, for example "rux".
-2. Open **Bot** and click **Reset Token**. Copy the token.
-3. Under **Privileged Gateway Intents**, switch on **Message Content Intent**. Standing rules,
-   watched channels and "hey rux" need it. Without it Discord refuses the connection (close
-   code 4014); rux then reconnects without it, so DMs and @mentions keep working, and tries
-   again with it every 6 hours. The settings page says when this happens.
-4. If rux will also be your [membership bot](/discord/membership-bot/#use-rux-as-the-membership-bot),
-   switch on **Server Members Intent** as well.
+### Orders
 
-## 2. Fill in the settings
+- An order is a DM to rux, or a message on one of rux's servers that @mentions it, replies to it or
+  calls it by name ("hey rux, …", "yo rux …", "rux, …"). Calls by name need the Message Content
+  intent.
+- One person gives at most **Orders per Minute** orders. An order sent while that person's last
+  one in the same channel still runs is answered "still on your last order" and dropped.
+- An order acts on the server it was written in. In a DM it acts on the main server (for a
+  moderator, the first server they moderate) until they pick another one with "switch to" and the
+  server's name. The pick is kept for a day.
+- rux remembers the last **History** minutes of the conversation, reads the message an order
+  replies to and its images, and makes at most **Steps per Order** model calls. An order ends
+  within ten minutes.
+- The answer is posted as a reply that never pings anyone.
+- Cases, giveaways and rules have numbers ("case 12", "giveaway 3", "rule 5") that admins can
+  refer to.
 
-Open Admin › Plugins › plugged.host AI › Settings, tab **rux**:
+### What it can do
 
-| Field | What to enter |
-| --- | --- |
-| rux is on | On. |
-| Bot token | The token from step 1. |
-| Discord server id | The server rux moderates. Defaults to the membership bot's (`DISCORD_GUILD_ID`). |
-| Time zone | The zone rux reads and writes every time in, for example `Europe/Berlin`. Default `Europe/Paris`. Members see times as Discord timestamps in their own zone. |
-| Default giveaway channel id | Optional: where giveaways go when an order names no channel. |
-| Mod log channel id | Optional: every moderation action is posted here. |
-| Most credits per winner, Most winners per giveaway | Sanity limits for one order (10,000 and 25 by default). |
-| Main admin (gives credits) | Discord user IDs, comma separated, of the people who may have rux give someone credits. Empty turns this off. |
-| Most credits per gift | Upper limit for one gift (10,000). |
-| Warnings | The warning steps, see [Warnings](#warnings). |
-| AI | Whether watched channels enforce the basic guidelines, and the spam guard. The section also shows the provider chain rux uses. |
-| Our own sites | Your domains, comma separated (`example.com` covers its subdomains). rux's checks never treat links to them as a scam or an advert. The panel's and the status page's addresses and the Discord invite always count. |
+Everything acts on the order's server only: its members, channels, roles, cases, rules and
+giveaways.
 
-Channel and user IDs are copied in Discord with Developer Mode on (User Settings › Advanced),
-by right-clicking the channel or user. Every setting and its `.env` key is on the
-[plugin page](/plugins/ai/#tab-rux).
+| Area | What rux does | Moderators |
+|---|---|---|
+| Members | Look up a member, warn, time out, kick, ban, unban, set a nickname, clear warnings, list cases and bans | Yes |
+| Messages | Read a channel, delete messages, purge (among the last 500 messages) | Yes, in channels they can see |
+| Channels | Slowmode (up to 6 hours), lock and unlock | Yes, except the mod log; they unlock only channels rux locked |
+| Server | Role info, a server overview | Yes |
+| Roles | Give or take a role | No |
+| Posting | Send a message, edit one of rux's own messages, send a DM | No |
+| Giveaways | Create, edit, end, cancel, reroll | List only |
+| Credits | Give a user credits | No (Main Admin only) |
+| Standing rules | Add, edit, remove, watch a channel, make a role a moderator role | List only |
+| Servers | Pick the server a DM acts on (with more than one server) | Yes |
 
-Save. The scheduler starts rux within a minute once nothing blocks it.
+### Moderation
 
-## 3. Invite it
+- Every action is a **case**: who ordered it (or rux itself, with the rule), on whom, why, for how
+  long, and the message rux acted on. It is posted to the server's mod log and carries the order in
+  Discord's audit log. The member gets a DM first for warnings, timeouts, kicks and bans.
+- Moderators never act on staff, panel admins, themselves or the bot. When rux cannot tell whether
+  someone is an admin, it leaves them alone.
+- Warnings count per server. The **warning ladder** times a member out from **Timeout from
+  Warning** on, and bans them from **Ban from Warning** on. When Discord refuses that step, the
+  warning stays and its case says why.
+- Bans are for good or for a while (1 minute to 10 years). rux lifts a timed ban itself, with a case
+  of its own. A new ban replaces a running one. Timeouts last up to 28 days.
+- Discord bulk deletes only messages from the last 14 days; older ones go one by one.
+- rux never hands out a role that comes with rewards (boost roles, the two-boost role, roles managed
+  by a bot) or @everyone.
 
-Get the invite link:
+### Giveaways
 
-```bash
-sudo -u www-data php artisan plugged-host:rux-supervise --status
-```
+- The prize is always credits. A title can name the occasion but never promise anything else
+  (memberships, tokens, resources, Nitro, roles); such a giveaway is refused.
+- The post has an **Enter** button. Entering needs a linked Discord account; someone who is not
+  linked gets a **Link** button. Someone already in can leave.
+- An admin can keep out the winners of the last 0 to 10 giveaways.
+- Limits: **Most Credits per Winner**, **Most Winners per Giveaway**, **Longest Giveaway**; it ends
+  at least a minute from now. A giveaway is refused while nothing can pay it (credits off).
+- At the end, winners are drawn at random among the entries that are still linked and still in the
+  server, and pinged in the channel. Reroll draws more winners the same way.
+- Each winner's credits go into their balance once. A winner who unlinked waits until they link
+  again; waiting payouts are retried for 90 days.
 
-The `Invite:` line has scope `bot` and permissions `2253174605966358`:
+### Credit gifts
 
-| Permission | Used for |
-| --- | --- |
-| View Channels, Read Message History | Reading orders and the messages rules apply to. |
-| Send Messages, Send Messages in Threads, Embed Links | Replies, giveaways, notices, the mod log. |
-| Manage Messages, Pin Messages | Deleting and purging messages, pinning. |
-| Manage Channels | Locking channels and slowmode. |
-| Kick Members, Ban Members, Timeout Members | Moderation and the warning steps. |
-| Manage Roles | Managing roles and giving moderator roles their permissions. |
-| Manage Nicknames | Setting nicknames. |
+Only the Discord accounts in **Main Admin (Gives Credits)** can have rux give someone credits, at
+most **Most Credits per Gift** at once. A retried order gives nothing twice. Gifts and giveaways are
+the only things rux gives.
 
-The rux tab shows the same link in its status box once rux can run.
+### Standing rules
 
-As the [membership bot](/discord/membership-bot/#use-rux-as-the-membership-bot), rux also needs
-the **applications.commands** scope (slash commands) and **Manage Server** (reading invites):
-permissions `2253174605966390`.
+- An admin's order like "if anyone asks for new locations, warn them" becomes a standing rule: what
+  breaks it, what looks close but does not, its keywords, what rux does (warn, time out, delete,
+  kick, ban), whether the message is deleted, what the member is told and in which channels.
+- A member message that hits a rule's keywords is checked by the AI. On a clear break rux acts as
+  the rule says, logs "rule #5" in the audit log and says so in the channel, so the member sees it
+  even with DMs closed.
+- One rule acts on the same member at most once per **Rule Cooldown**.
+- Removing a rule switches it off; it stays for its cases.
 
-## 4. Order the roles
+### Watched channels
 
-In Discord, open Server Settings › Roles and drag rux's role **above** the roles of every member
-it should be able to moderate, and above the roles it should manage (including the moderator
-roles it gives permissions to). Discord does not let a bot act on anyone whose highest role is
-above its own, or on the server owner.
+- "Watch #support" has every member message in that channel checked by the AI, in batches, against
+  the standing rules and, while **Watched Channels Also Enforce the Basic Guidelines** is on, the
+  basic guidelines: scams and phishing, slurs and hate, harassment, sexual or gore content,
+  advertising. A message that breaks a guideline is deleted and its author warned.
+- The checks treat your own sites as yours, never as adverts: **Our Own Sites**, a server's **Its
+  Own Sites**, the panel's address and the Discord invite.
+- When no model can answer at all, watching pauses for ten minutes and the waiting messages are
+  dropped unchecked.
 
-## 5. Check it
+### Spam
 
-```bash
-sudo -u www-data php artisan plugged-host:rux-supervise --status
-```
+While **Catch Spam Automatically** is on, rux checks every channel without AI:
 
-| Line | Meaning |
-| --- | --- |
-| Runnable | `yes`, or everything still missing: production, the switch, the token, the server ID, the account directory, neo's providers, the tables. |
-| Running | Whether the daemon runs, with its process ID. |
-| Paused | `yes` after `--stop`. |
-| Connected | When it connected, and as which bot. |
-| Heartbeat | Seconds since the daemon last reported. |
-| Invite | The invite link. |
-| Log | `storage/logs/rux.log` |
+- **Flooding**: the Flooding: Messages-th message within Flooding: Seconds.
+- **Repeats**: the Repeats: Messages-th copy of the same text within Repeats: Seconds, in any
+  channel. The first copy stays.
+- **Mentions in One Message** or more people and roles pinged, or **Emoji in One Message** or more
+  emoji.
 
-```bash
-sudo -u www-data php artisan plugged-host:rux-supervise --stop      # stays down until --start
-sudo -u www-data php artisan plugged-host:rux-supervise --start
-sudo -u www-data php artisan plugged-host:rux-supervise --restart
-sudo -u www-data php artisan plugged-host:rux-ai                    # the provider chain rux uses
-```
+Every caught message is deleted and the member is warned at most once per Rule Cooldown (30 seconds
+at least) per server; within the cooldown the spam is only deleted. The warning is a case, counts
+towards the warning ladder and is said in the channel.
 
-The daemon is replaced by itself when the token or server ID changes. Its restart timings are
-plugged-host-discord's [supervisor settings](/plugins/discord/#gateway-daemon--supervision).
+### More than one server
 
-## Who rux listens to
+rux works on the main server and up to nine more, with one bot. Each server has its own rules,
+watched channels, moderator roles, warnings, cases, giveaways, mod log and giveaway channel. Admins,
+the Main Admin list and credits are the same everywhere. Removing a server stops rux there.
 
-- **Admins** can order everything except giving credits. An admin is a Discord account linked
-  to a panel account that is a root admin. Link it through the panel's Discord sign-in
-  ([Membership bot](/discord/membership-bot/#2-use-it-as-the-panels-discord-sign-in)). With
-  plugged-host-noprofit enabled, admins are noprofit.space admins instead.
-- **The main admins** (`RUX_CREDIT_GRANTERS`) can also have rux give someone credits, at most the
-  gift limit at once. They must be admins as well. Other admins, moderators, standing rules and
-  text rux reads can never make it pay. The credits go to the panel account the person linked
-  Discord to, as an admin adjustment.
-- **Moderators** are members of a role an admin made a rux moderator role. They can order
-  moderation only: look up members, warn, time out, kick, ban, unban, set nicknames, read,
-  delete and purge messages, lock channels and slowmode, clear warnings, and see the rules,
-  giveaways, case log, bans, role permissions and a server overview. They only read or delete in
-  channels they can see themselves, never touch the mod log channel, and can never act on staff,
-  admins, other moderators or themselves.
-- **Everyone else** is ignored. In a DM they are told, at most once an hour, that rux only takes
-  orders from admins; on the server rux stays silent.
+## Requirements
 
-Making a role a moderator role also gives it Discord's Kick, Ban, Manage Messages and Timeout
-permissions, unless the admin says not to. Taking it back removes exactly what rux added.
+- A Discord application with a bot for rux, with the **Message Content Intent** on. Without it rux
+  connects without it: DMs and @mentions work, "hey rux", standing rules, watched channels and the
+  spam check do not.
+- [The Discord integration](/discord/integration/) on with a Server ID, and its **Moderation Bot**
+  switched on with rux's token.
+- The **Discord Sign-in** provider set on the Discord tab, and each admin's Discord account linked
+  in Account › OAuth Links. Without it nobody is an admin.
+- At least one AI model in Admin › Settings › AI › neo ([neo](/ai/neo/#setup)). rux calls neo's
+  models directly: neo does not have to be switched on, and no neo limits apply. For watched
+  channels and standing rules, at least one model must be open to everyone.
+- Credits on (Admin › Settings › Economy) for giveaways and gifts.
 
-One order at a time per conversation: an order that arrives while the last one is still being
-carried out is answered "still on your last order" and dropped. rux remembers the last 30
-minutes of a conversation with an admin.
+## Setup
 
-## Moderation
+1. In the [Discord Developer Portal](https://discord.com/developers/applications), create a **New
+   Application** for rux. Open **Bot**, click **Reset Token** and copy the token. Under **Privileged
+   Gateway Intents**, turn on **Message Content Intent** and save.
+2. Admin › Settings › Accounts › Discord: switch **Discord** on with your **Server ID**, switch on
+   **Moderation Bot** and paste the token into **Moderation Bot Token**. Pick the **Discord
+   Sign-in** provider if you have not ([setup](/discord/integration/#setup)). Save.
+3. Every admin who should give orders links Discord in Account › OAuth Links.
+4. Admin › Settings › AI › neo: add at least one model, open to everyone ([neo setup](/ai/neo/#setup)).
+5. Admin › Settings › Accounts › rux: the top of the page lists what still stops rux. Fill in the
+   **Bot** section (main server, time zone, language) and the **Mod Log Channel ID**, then save.
+6. Once the token is saved, the page shows an **Invite link** per server. Open each and add the
+   bot. It asks for the `bot` and `applications.commands` scopes and these permissions: View Channels, Send
+   Messages, Send Messages in Threads, Embed Links, Read Message History, Manage Messages, Pin
+   Messages, Manage Channels, Kick Members, Ban Members, Moderate Members (time out), Manage Roles,
+   Manage Nicknames and Manage Server.
+7. In each server's Settings › Roles, drag rux's role above the roles of the members it should act
+   on and the roles it should hand out. Discord lets a bot act only below its own highest role.
+8. DM rux "hey" from a linked admin account. It answers.
 
-Every moderation action is a case. It is posted to the mod log channel when one is set,
-Discord's audit log shows who ordered it, and the member gets a DM with the reason (before a
-kick or ban). When rux acts by itself (a rule, a watched channel, spam) the case keeps the start
-of what the member wrote.
+The page shows the moderation bot's state: starting, refused (wrong token, intents not allowed,
+closed), online without the Message Content intent, or `rux is online, connected as <name>`.
+
+## Settings
+
+Admin › Settings › Accounts › rux. Channel, server and user ids are Discord ids: turn on Developer
+Mode in Discord (User Settings › Advanced) and right-click › Copy ID.
+
+### Bot
+
+| Setting | Default | What it does |
+|---|---|---|
+| Name | `rux` | What members call it and what it calls itself. Letters, digits, `-` and `_`, up to 32 |
+| Main Discord Server ID | The Discord tab's Server ID | The main server; DMs act on it until someone picks another |
+| Time Zone | `UTC` | The zone rux reads and writes every time in (an IANA name like `Europe/Berlin`) |
+| Language | English | The language rux posts in: English or German |
+| Orders per Minute | 6 | Orders one person may give a minute (1 to 120) |
+| Steps per Order | 8 | Model calls one order may take (2 to 30) |
+| History | 30 | Minutes of conversation an order remembers (1 to 1440) |
+
+### Giveaways and Moderation
+
+| Setting | Default | What it does |
+|---|---|---|
+| Default Giveaway Channel ID | Empty | On the main server; used when an order names no channel |
+| Mod Log Channel ID | Empty | On the main server; every action is posted here |
+| Most Credits per Winner | 10000 | 1 to 1000000 |
+| Most Winners per Giveaway | 25 | 1 to 500 |
+| Longest Giveaway | 60 | Days, 1 to 365 |
+| Main Admin (Gives Credits) | Empty | Up to 20 Discord user ids that may have rux give credits. Empty turns gifts off |
+| Most Credits per Gift | 10000 | 1 to 1000000 |
+
+### More Discord Servers
+
+Up to nine, each with:
+
+| Setting | What it does |
+|---|---|
+| Server ID | Its Discord server id (not the main one, each once) |
+| Name | Whose server it is in rux's prompts, such as `example.com`. Empty: the panel's name |
+| What It Is | Completes "(name) is …", such as "a free VPS host". Empty: a free game server host |
+| Default Giveaway Channel ID, Mod Log Channel ID | Its own channels |
+| Its Own Sites | More domains the checks treat as this host's own, on top of Our Own Sites |
 
 ### Warnings
 
-Warnings count until an admin or moderator clears them. With the defaults:
+| Setting | Default | What it does |
+|---|---|---|
+| Timeout from Warning | 3 | From this warning on, each new one also times the member out (0 turns it off, up to 100) |
+| Timeout Length | `24h` | A duration like `24h` or `7d`, at most `28d` |
+| Ban from Warning | 5 | From this warning on, each new one bans the member for a while (0 turns it off) |
+| Ban Length | `24h` | A duration; rux lifts the ban afterwards |
 
-- the 3rd and the 4th warning also time the member out for 24 hours;
-- the 5th and every later warning bans them for 24 hours, and rux lifts the ban afterwards.
+### AI
 
-Manual, rule and watched-channel warnings all count. Change the steps on the rux tab (a step at
-`0` is off; timeouts are at most 28 days).
+The section lists the models rux uses for orders and for checks, in order.
 
-### Standing rules and watched channels
+| Setting | Default | What it does |
+|---|---|---|
+| Watched Channels Also Enforce the Basic Guidelines | On | Scams, slurs, harassment, sexual content and advertising: deleted and warned |
+| Catch Spam Automatically, in Every Channel | On | The spam check, without AI |
+| Flooding: Messages, Flooding: Seconds | 7, 10 | 2 to 100 messages within 1 to 600 seconds |
+| Repeats: Messages, Repeats: Seconds | 3, 120 | 2 to 100 copies within 1 to 3600 seconds |
+| Mentions in One Message | 6 | 2 to 100 |
+| Emoji in One Message | 25 | 2 to 500 |
+| Rule Cooldown | 300 | Seconds between two actions of one rule on the same member (0 to 86400) |
+| Our Own Sites | Empty | Up to 20 domains (`example.com`, with its subdomains) that are never a scam or an advert |
 
-- **Standing rules** ("if anyone asks for X, warn them"): rux turns the order into a description,
-  exceptions and keywords. The daemon compares every member message with the keywords; a hit is
-  checked by the AI before rux acts (warn, time out, delete, kick or ban, with a short notice in
-  the channel). One rule acts on one member at most once every 5 minutes.
-- **Watched channels** start as `chat` and `bot-commands` (matched by name, so `💬│chat` counts);
-  admins add and remove channels by telling rux. Every member message there is checked in batches
-  against every rule and against the basic guidelines: scams and phishing, slurs, harassment,
-  sexual content and advertising. Breaking a guideline deletes the message and warns the author
-  (`RUX_WATCH_GUIDELINES` turns the guidelines off). When the AI is busy for long, messages are
-  skipped rather than checked late.
-- **Spam** is caught without AI in every channel rux can read: 7 messages within 10 seconds, the
-  3rd copy of the same text within 2 minutes, 6 or more people and roles pinged, or 25 or more
-  emoji. The spam is deleted and the author warned (the thresholds are `RUX_SPAM_*` in the `.env`).
-- **Your own sites are never a scam or an advert.** Every check is told your sites: the panel's
-  and the status page's host names, the Discord invite (`DISCORD_INVITE_URL`), noprofit.space
-  with plugged-host-noprofit, and the domains in **Our own sites**. Add every domain of yours
-  members post links to, or links to it may be judged as advertising.
-- **Staff are never checked**: the server owner, anyone with Administrator, Manage Server, Kick,
-  Ban, Timeout or Manage Messages, and rux moderators.
+## Background tasks
 
-## Giveaways
+Runs on the instance with `APP_PRIMARY=true` only.
 
-- Entering needs a Discord account linked to a panel account; people who are not linked get a
-  button to link it.
-- "Keep out the winners of the last N giveaways" (N up to 10) uses the newest giveaways at the
-  moment the giveaway is created; rux's reply names them.
-- The draw runs at the end time: the daemon checks every 10 seconds, the scheduler every minute
-  as a fallback. Winners are picked at random among entrants still linked and still in the
-  server, and paid in credits under a key per draw, so a retried payout pays nobody twice. A
-  payout that fails is retried every minute.
-- Rerolls draw extra winners, and pay them too.
-
-## Back up rux's tables
-
-Moderator roles, standing rules, watched channels and the case log are set from Discord and
-exist only in the panel's database:
-
-| Table | Holds |
-| --- | --- |
-| `rux_moderator_roles` | Which Discord roles are rux moderators, and what rux added to them. |
-| `rux_rules` | Standing rules. |
-| `rux_watches` | Watched channels. |
-| `rux_cases` | The case log: warnings (the warning steps count from here) and the timed bans rux still has to lift. |
-| `rux_giveaways`, `rux_giveaway_entries` | Giveaways and their entries. |
-| `rux_messages` | rux's conversation memory, pruned after 30 days. |
-| `rux_watch_queue` | Messages waiting for a watched-channel check. |
-
-Include them in your database backups, and restore them when you rebuild the panel. Without
-them rux starts with no moderators, no rules, only the two default watched channels and no
-warning history, and never lifts the temporary bans it already gave.
+| Task | When | What it does |
+|---|---|---|
+| `rux` | Every 10 seconds | Draws due giveaways and lifts timed bans; once a minute restarts orders that lost their worker; once a day deletes rux's stored messages older than 30 days |
 
 ## Notes
 
-- rux's prompts and checks name your panel (`APP_NAME`) and describe it as a free game server
-  host. If yours is not free, edit `src/Rux/Agent/RuxPrompt.php`, `src/Rux/Rules/RuleService.php`
-  and `src/Rux/Watch/WatchService.php` in the plugin.
-- What rux posts on Discord is in English; set `RUX_LOCALE=de` for German.
-- rux orders try a premium provider slot first, if one is set; message checks never use it.
-  Provider rate limits are shared with neo when both use the same keys, so busy providers can
-  delay rux too.
-- Never put production's `RUX_BOT_TOKEN` in a dev panel's `.env`.
+- rux's AI: orders try the models open only to members first, then the others. Message checks
+  (watched channels, standing rules) never use the members-only models: when the others cannot
+  answer, the message is not checked. A busy AI is waited out for up to two and a half minutes per
+  order.
+- Without any usable model the page says rux cannot think, and orders are answered that the AI is
+  unavailable.
+- rux keeps every order, its answers and the tools' output for 30 days, so the next order of a
+  conversation remembers it.
+- Member text reaches the AI marked as untrusted data, so a message cannot give rux orders.
+- With noprofit.space connected, rux's admins are noprofit.space's admins, giveaways and gifts are
+  paid to noprofit.space balances, rux can take its models from noprofit.space, and its settings can
+  be kept there (then shown read-only on this page). See [noprofit.space](/accounts/noprofit/).

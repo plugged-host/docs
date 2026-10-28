@@ -1,0 +1,28 @@
+# Addresses of pages that were removed or moved, to the page that covers the topic now.
+# Cloudflare Workers static assets read this file; it is not served as a page.
+/panel/plugins/ /start/introduction/ 301
+/panel/queue-and-scheduler/ /reference/architecture/ 301
+/panel/doctor/ /panel/troubleshooting/ 301
+/plugins/abuse/ /safety/abuse/ 301
+/plugins/ads/ /economy/ads/ 301
+/plugins/ai/ /ai/neo/ 301
+/plugins/devbox/ /servers/devboxes/ 301
+/plugins/discord/ /discord/integration/ 301
+/plugins/economy/ /economy/credits-and-tokens/ 301
+/plugins/fivem/ /games/fivem/ 301
+/plugins/limbo/ /starts/limbo/ 301
+/plugins/minecraft/ /games/minecraft/ 301
+/plugins/noprofit/ /accounts/noprofit/ 301
+/plugins/queue/ /starts/start-queue/ 301
+/plugins/servers/ /servers/create-server/ 301
+/plugins/status/ /status/status-page/ 301
+/plugins/storage/ /nodes/failover/ 301
+/plugins/theme-v2/ /panel/branding/ 301
+/plugins/* /start/introduction/ 301
+/nodes/abuse-agent/ /safety/abuse/ 301
+/nodes/devboxes/ /servers/devboxes/ 301
+/nodes/fivem-image/ /games/fivem/ 301
+/storage/* /nodes/failover/ 301
+/discord/membership-bot/ /discord/integration/ 301
+/discord/neo/ /ai/neo/ 301
+/status/status-export/ /status/status-page/ 301

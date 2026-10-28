@@ -1,40 +1,43 @@
 ---
 title: plugged.host docs
-description: How to set up a panel like plugged.host — Pelican Panel with the plugged.host plugins, its nodes, storage box, Discord bots and status page.
+description: How to run a panel like plugged.host — the v3 panel, a fork of Calagopus, with its Wings fork and every plugged.host feature.
 template: splash
 hero:
   title: Run your own plugged.host
-  tagline: Pelican Panel with the plugged.host plugins, from an empty server to a working host — nodes, off-node mirrors and failover, Discord bots, neo and the status page included.
+  tagline: The plugged.host panel, a fork of Calagopus with plugged.host's features built in, from an empty server to a working host — nodes, self-service servers, Minecraft and FiveM tools, failover, Discord and neo included.
   actions:
     - text: Start here
       link: /start/introduction/
       variant: primary
-    - text: Plugin reference
-      link: /plugins/core/
+    - text: Install the panel
+      link: /panel/install/
       variant: secondary
 ---
 
-plugged.host is a free host for game servers, bots and small services. Under the hood it is an
-unmodified [Pelican Panel](https://pelican.dev) and a set of plugins that add everything else:
-self-service servers and plans, credits, Minecraft and FiveM tools, idle-server hibernation,
-storage mirrors with automatic node failover, abuse protection, Discord rewards, an AI assistant
-and a status page. The plugins are open source in
-[plugged-host/plugins](https://github.com/plugged-host/plugins), and these pages explain how to
-set them up yourself.
+plugged.host is a free host for game servers, bots and small services. It runs on its own panel: a
+fork of [Calagopus](https://calagopus.com) (Rust and React, MIT) with everything plugged.host adds
+written into its source: self-service servers within an allowance, credits and tokens, Minecraft
+and FiveM tools, idle-server parking, node failover from off-node backups, abuse protection,
+Discord rewards, the neo assistant and the data for a status page. Its nodes run a matching fork of
+Calagopus Wings. Both are open source:
+[plugged-host/panel](https://github.com/plugged-host/panel) and
+[plugged-host/wings](https://github.com/plugged-host/wings). These pages explain how to run them
+yourself.
 
 ## Where to go
 
 - **New install:** read the [introduction](/start/introduction/) and the
   [requirements](/start/requirements/), then follow the [install order](/start/install-order/).
-- **One plugin:** every plugin has a page under **Plugins** with what it does, its settings and its
-  commands.
-- **Something broke:** run [`plugged-host:doctor`](/panel/doctor/), then see
-  [troubleshooting](/panel/troubleshooting/).
+- **One feature:** every plugged.host feature has a page with what it does, what it needs, its
+  setup and its settings: see the sidebar, from Nodes to Discord and AI.
+- **The basics** the fork leaves as Calagopus has them (eggs, locations, databases, backups, mail,
+  OAuth): the [Calagopus documentation](https://calagopus.com/docs).
+- **Something broke:** Admin › Overview › Health, then [troubleshooting](/panel/troubleshooting/).
 
 ## Getting help
 
 Ask in the [plugged.host Discord](https://discord.gg/plugged-host-1502647500295635085) or open an
-issue on [GitHub](https://github.com/plugged-host/plugins/issues). Report security problems
+issue on [GitHub](https://github.com/plugged-host/panel/issues). Report security problems
 privately, as the repository's
-[security policy](https://github.com/plugged-host/plugins/blob/main/SECURITY.md) describes, never in a
+[security policy](https://github.com/plugged-host/panel/blob/main/SECURITY.md) describes, never in a
 public issue.

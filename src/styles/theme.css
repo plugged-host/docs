@@ -1,138 +1,313 @@
-/* plugged.host's look on Starlight.
+/* plugged.host's v3 panel look on Starlight.
 
-   The values are the shared token layer of plugged.host and status.plugged.host
-   (html/assets/app.src.css), which mirrors the panel theme
-   (plugged-host-theme-v2/resources/css/theme.css): royal-blue accent, obsidian
-   surfaces, Space Grotesk and JetBrains Mono. Starlight wants solid greys, so the
-   panel's translucent raises (white at 5/10/15 % over the page) are written out as
-   the colours they produce on #0b0d10.
+   Every value is a token of the panel's Theme v2 (plugged-host/panel,
+   frontend/src/app.css › "plugged.host Theme v2" and frontend/src/theme.ts):
+   royal-blue accent (#1d4ed8 fills, #3b82f6 as text and rings), obsidian surfaces,
+   Space Grotesk and JetBrains Mono. Like the panel it is dark only: the theme
+   picker is removed (src/components/ThemeSelect.astro) and nothing switches
+   data-theme away from "dark" (src/components/ThemeProvider.astro).
 
-   Flat, as on the sites: no shadows except menus and the search dialog, no glows,
-   no gradients, asides drawn as a fill without a border or icon. */
+   The panel's raises are white at 5/10/15 % over the page floor. Starlight wants
+   solid greys for surfaces, so those are written out as the colours they make on
+   #0b0d10; hairlines stay translucent, as in the panel.
+
+   Flat, as in the panel: the page floor is the only gradient, no shadows except the
+   search dialog (the panel's modal), no glows, no glass, no decorative icons. */
 
 :root,
-::backdrop {
-	--sl-font: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-	--sl-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-
-	--ph-radius-control: 0.5rem;
-	--ph-radius-card: 1rem;
-}
-
+::backdrop,
 :root[data-theme='dark'],
-[data-theme='dark'] ::backdrop {
-	/* --phv2-text, a light grey between it and text-nav, then text-nav/muted/faint. */
-	--sl-color-white: #ffffff;
-	--sl-color-gray-1: #e5e7eb;
-	--sl-color-gray-2: #d1d5db;
-	--sl-color-gray-3: #9ca3af;
-	--sl-color-gray-4: #71717a;
-	--sl-color-gray-5: #232528; /* --phv2-raise-2 */
-	--sl-color-gray-6: #17191c; /* --phv2-raise */
-	--sl-color-black: #0b0d10; /* --phv2-bg-bottom */
-
-	--sl-color-accent-low: #0e172e; /* --phv2-accent-tint */
-	--sl-color-accent: #1d4ed8; /* --phv2-accent: fills */
-	--sl-color-accent-high: #3b82f6; /* --phv2-accent-bright: accent as text */
-
-	--sl-color-text: var(--sl-color-gray-2);
-	--sl-color-text-accent: var(--sl-color-accent-high);
-	--sl-color-text-invert: #ffffff;
-	--sl-color-bg: var(--sl-color-black);
-	--sl-color-bg-nav: #101319; /* --phv2-bg-top, the sites' top bar */
-	--sl-color-bg-sidebar: #101319;
-	--sl-color-bg-inline-code: var(--sl-color-gray-5);
-	--sl-color-bg-accent: var(--sl-color-accent);
-	--sl-color-hairline-light: var(--sl-color-gray-5);
-	--sl-color-hairline: var(--sl-color-gray-6);
-	--sl-color-hairline-shade: var(--sl-color-black);
-
-	--sl-shadow-sm: none;
-}
-
+[data-theme='dark'] ::backdrop,
 :root[data-theme='light'],
 [data-theme='light'] ::backdrop {
-	/* The sites' light set. */
-	--sl-color-white: #0f172a;
-	--sl-color-gray-1: #1e293b;
-	--sl-color-gray-2: #334155;
-	--sl-color-gray-3: #475569;
-	--sl-color-gray-4: #64748b;
-	--sl-color-gray-5: #cbd5e1;
-	--sl-color-gray-6: #e2e8f0;
-	--sl-color-gray-7: #f1f5f9;
-	--sl-color-black: #ffffff;
+	color-scheme: dark;
 
-	--sl-color-accent-low: #dbeafe;
-	--sl-color-accent: #1d4ed8;
-	--sl-color-accent-high: #1e40af;
+	/* Panel tokens (--theme-* in app.css). */
+	--theme-accent: #1d4ed8;
+	--theme-accent-hover: #1e40af;
+	--theme-accent-bright: #3b82f6;
+	--theme-accent-soft: rgb(29 78 216 / 0.1);
+	--theme-accent-tint: rgb(29 78 216 / 0.15);
+	--theme-bg-top: #101319;
+	--theme-bg-bottom: #0b0d10;
+	--theme-sidebar: #1c1e23;
+	--theme-sunken: rgb(15 17 22 / 0.5);
+	--theme-modal: #1a1c20;
+	--theme-raise: rgb(255 255 255 / 0.05);
+	--theme-raise-2: rgb(255 255 255 / 0.1);
+	--theme-raise-3: rgb(255 255 255 / 0.15);
+	--theme-hairline: rgb(255 255 255 / 0.05);
+	--theme-text: #ffffff;
+	--theme-text-nav: #d1d5db;
+	--theme-text-muted: #9ca3af;
+	--theme-text-faint: #71717a;
 
-	--sl-color-text: var(--sl-color-gray-2);
-	--sl-color-text-accent: var(--sl-color-accent);
-	--sl-color-text-invert: #ffffff;
-	--sl-color-bg-nav: #ffffff;
-	--sl-color-bg-sidebar: #ffffff;
-	--sl-color-bg-inline-code: var(--sl-color-gray-7);
-	--sl-color-hairline-light: var(--sl-color-gray-6);
-	--sl-color-hairline-shade: var(--sl-color-gray-6);
+	/* Fonts. */
+	--sl-font: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+	--sl-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
+	/* Text ramp: white headings, Mantine's dark-0, nav text, muted, faint. */
+	--sl-color-white: var(--theme-text);
+	--sl-color-gray-1: #f3f4f6;
+	--sl-color-gray-2: var(--theme-text-nav);
+	--sl-color-gray-3: var(--theme-text-muted);
+	--sl-color-gray-4: var(--theme-text-faint);
+	/* Surfaces: raise-2 and raise over the page floor, then the floor. */
+	--sl-color-gray-5: #232528;
+	--sl-color-gray-6: #17191c;
+	--sl-color-gray-7: #17191c;
+	--sl-color-black: var(--theme-bg-bottom);
+
+	/* Accent: the fill, the text shade, and the tint over the floor. */
+	--sl-color-accent-low: #0e172e;
+	--sl-color-accent: var(--theme-accent);
+	--sl-color-accent-high: var(--theme-accent-bright);
+
+	--sl-color-text: var(--theme-text-nav);
+	--sl-color-text-accent: var(--theme-accent-bright);
+	--sl-color-text-invert: var(--theme-text);
+	--sl-color-bg: var(--theme-bg-bottom);
+	--sl-color-bg-nav: var(--theme-sidebar);
+	--sl-color-bg-sidebar: var(--theme-sidebar);
+	--sl-color-bg-inline-code: var(--sl-color-gray-5);
+	--sl-color-bg-accent: var(--theme-accent);
+	--sl-color-hairline-light: var(--theme-hairline);
+	--sl-color-hairline: var(--theme-hairline);
+	--sl-color-hairline-shade: var(--theme-hairline);
+	--sl-color-backdrop-overlay: rgb(11 13 16 / 0.75);
+
+	/* Only the search dialog keeps an elevation: the panel's modal shadow. */
 	--sl-shadow-sm: none;
+	--sl-shadow-md: none;
+	--sl-shadow-lg: 0 25px 50px -12px rgb(0 0 0 / 0.5), 0 0 0 1px var(--theme-hairline);
 }
 
-/* Headings as on the sites. */
-.sl-markdown-content :is(h1, h2, h3, h4),
+/* The page floor, as in the panel: #101319 to #0b0d10, fixed so it does not repeat. */
+html {
+	background-color: var(--theme-bg-bottom);
+	background-image: linear-gradient(to bottom, var(--theme-bg-top), var(--theme-bg-bottom));
+	background-attachment: fixed;
+}
+body {
+	background-color: transparent;
+}
+
+/* Headings: the panel's semibold, no tracking. */
+.sl-markdown-content :is(h1, h2, h3, h4, h5, h6),
 h1#_top {
-	font-weight: 700;
-	letter-spacing: -0.02em;
+	font-weight: 600;
+	letter-spacing: normal;
+	color: var(--theme-text);
 }
 
-/* The current page in the sidebar: the accent fill with white text, rounded like
-   the panel's nav items. */
-.sidebar-content a[aria-current='page'],
-.sidebar-content a[aria-current='page']:hover,
-.sidebar-content a[aria-current='page']:focus {
-	background-color: var(--sl-color-accent);
-	color: #ffffff;
-	border-radius: var(--ph-radius-control);
+/* The top bar and the sidebar share the sidebar's colour and are split from the page
+   by the hairline (--sl-color-hairline-shade), like the panel's sidebar. */
+
+/* Sidebar groups: the panel's group captions over flat rows, without indent lines. */
+.sidebar-content .large {
+	color: var(--theme-text-faint);
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 }
-.sidebar-content a {
-	border-radius: var(--ph-radius-control);
+.sidebar-content summary {
+	padding: 1rem 0.875rem 0.375rem;
+}
+.sidebar-content summary .caret {
+	color: var(--theme-text-faint);
+}
+.sidebar-content ul ul li {
+	margin-inline-start: 0;
+	padding-inline-start: 0;
+	border-inline-start: 0;
+}
+.sidebar-content .top-level > li + li {
+	margin-top: 0.25rem;
 }
 
-/* Asides: a fill, no border, no icon. */
+/* Sidebar rows: rounded-xl, nav text, the raise on hover; the current page as the
+   panel's active row (the soft accent fill with the bright accent as its label). */
+.sidebar-content ul a {
+	padding: 0.4375rem 0.875rem;
+	margin-block-end: 0.125rem;
+	border-radius: 0.75rem;
+	color: var(--theme-text-nav);
+	font-size: 0.875rem;
+	font-weight: 500;
+}
+.sidebar-content ul a:hover,
+.sidebar-content ul a:focus-visible {
+	background-color: var(--theme-raise);
+	color: var(--theme-text);
+}
+.sidebar-content ul a[aria-current='page'],
+.sidebar-content ul a[aria-current='page']:hover,
+.sidebar-content ul a[aria-current='page']:focus {
+	background-color: var(--theme-accent-soft);
+	color: var(--theme-accent-bright);
+	font-weight: 500;
+}
+
+/* The search button on wide screens: the panel's input (sunken fill, hairline edge,
+   md radius). On phones it stays Starlight's bare icon button. The dialog is the
+   panel's modal surface. */
+site-search dialog {
+	border: 0;
+	background-color: var(--theme-modal);
+}
+@media (min-width: 50rem) {
+	site-search button[data-open-modal] {
+		border: 1px solid var(--theme-hairline);
+		border-radius: 0.5rem;
+		background-color: var(--theme-sunken);
+		color: var(--theme-text-faint);
+	}
+	site-search button[data-open-modal]:hover {
+		border-color: var(--theme-raise-3);
+		color: var(--theme-text-nav);
+	}
+	site-search button[data-open-modal] > kbd {
+		background-color: var(--theme-raise-2);
+		color: var(--theme-text-muted);
+	}
+	site-search dialog {
+		border-radius: 0.75rem;
+	}
+}
+
+/* Buttons (the home page's hero): pills, 2.75rem tall, semibold. Primary is the accent
+   fill with white text; secondary the panel's grey button (white/10, no edge). */
+.sl-link-button {
+	min-height: 2.75rem;
+	padding: 0 1.25rem;
+	border: 0;
+	border-radius: 2rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	transition: background-color 150ms ease;
+}
+.sl-link-button.primary,
+.sl-link-button.primary:hover {
+	background-color: var(--theme-accent);
+	color: var(--theme-text);
+}
+.sl-link-button.primary:hover {
+	background-color: var(--theme-accent-hover);
+}
+.sl-link-button.secondary {
+	background-color: var(--theme-raise-2);
+	color: var(--theme-text);
+}
+.sl-link-button.secondary:hover {
+	background-color: var(--theme-raise-3);
+	color: var(--theme-text);
+}
+
+/* Asides: the panel's callouts, a 15 % tint of the status colour (Mantine's light
+   variant), 1rem corners, no edge, no side bar and no icon beside the title. */
 .starlight-aside {
 	border: 0;
-	border-radius: var(--ph-radius-control);
+	border-radius: 1rem;
+	padding: 1rem;
 }
 .starlight-aside__icon {
 	display: none;
 }
+.starlight-aside__title {
+	color: var(--theme-text);
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+.starlight-aside__content {
+	color: var(--theme-text-nav);
+}
+.starlight-aside--note {
+	background-color: var(--theme-accent-tint);
+}
+.starlight-aside--tip {
+	background-color: rgb(64 192 87 / 0.15);
+}
+.starlight-aside--caution {
+	background-color: rgb(250 176 5 / 0.15);
+}
+.starlight-aside--danger {
+	background-color: rgb(250 82 82 / 0.15);
+}
 
-/* Inline code: rounded like the sites' badges, no border. */
+/* Inline code: the panel's Code (raise-2, nav text), no edge. */
 .sl-markdown-content :not(pre) > code {
 	border: 0;
-	border-radius: 0.375rem;
+	border-radius: 0.25rem;
+	background-color: var(--theme-raise-2);
+	color: var(--theme-text-nav);
 }
 
-/* Links in prose: the accent text colour, underlined as on the sites. */
+/* Links in prose: the accent as text, as the panel's anchors. */
 .sl-markdown-content a:not(:where(.not-content *)) {
-	color: var(--sl-color-text-accent);
+	color: var(--theme-accent-bright);
 	text-underline-offset: 3px;
 }
+.sl-markdown-content a:not(:where(.not-content *)):hover {
+	color: var(--theme-text);
+}
 
-/* Tables: rows divided by a hairline, no outer frame. */
+/* Tables: the panel's, without a box of their own: a white/5 head band, rows split
+   by the hairline, semibold white heads. */
 .sl-markdown-content table {
-	font-size: var(--sl-text-sm);
+	font-size: 0.875rem;
 }
 .sl-markdown-content :is(th, td) {
+	padding: 0.75rem;
 	border: 0;
-	border-bottom: 1px solid var(--sl-color-hairline-light);
+	border-bottom: 1px solid var(--theme-hairline);
 	vertical-align: top;
 }
 .sl-markdown-content th {
-	background: transparent;
-	color: var(--sl-color-white);
+	background-color: var(--theme-raise);
+	color: var(--theme-text);
+	font-weight: 600;
 }
 .sl-markdown-content td code {
 	overflow-wrap: anywhere;
+}
+
+/* Previous / next: the panel's cards, a raise fill without an edge, rounded-2xl. */
+.pagination-links a {
+	border: 0;
+	border-radius: 1rem;
+	background-color: var(--theme-raise);
+	color: var(--theme-text-muted);
+	box-shadow: none;
+}
+.pagination-links a:hover {
+	background-color: var(--theme-raise-2);
+}
+.pagination-links .link-title {
+	color: var(--theme-text);
+	font-size: 1rem;
+	font-weight: 600;
+}
+
+/* "On this page": nav text, the current heading in the bright accent. */
+starlight-toc a {
+	color: var(--theme-text-muted);
+}
+starlight-toc a:hover {
+	color: var(--theme-text);
+}
+starlight-toc a[aria-current='true'],
+starlight-toc a[aria-current='true']:hover {
+	color: var(--theme-accent-bright);
+}
+
+/* Focus rings: the bright accent, as on the panel's inputs and rows. */
+:focus-visible {
+	outline-color: var(--theme-accent-bright);
+}
+
+/* Selected text: the accent tint. */
+::selection {
+	background-color: rgb(29 78 216 / 0.4);
+	color: var(--theme-text);
 }

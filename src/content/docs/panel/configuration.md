@@ -1,72 +1,95 @@
 ---
 title: Configuration
-description: Where the plugins' settings live, and the first pass through them on a new panel.
+description: Every environment variable the panel reads, and a map of the Admin › Settings pages where everything else is set.
 ---
 
-## Where settings live
+The panel splits its configuration in two:
 
-Every plugin with settings has a page at **Admin › Plugins › (plugin) › Settings**. Saving it
-writes the values to the panel's `.env`, so the two are the same thing: you can also edit `.env`
-directly and clear the config cache afterwards. Each plugin's `config/<plugin>.php` lists every
-key with its default, and each plugin page in these docs has the full table.
+- **The environment** (`/etc/calagopus/panel.env`) holds only what the panel needs before it can
+  reach its database: where the database and Redis are, the encryption key, the address it listens
+  on. Change it, then restart the panel.
+- **Admin › Settings** holds everything else, stored in the database. A save applies at once on the
+  instance that saved it, and within a minute on any other instance. Secrets (API keys, tokens) are
+  stored encrypted and never shown again: an empty secret field keeps the stored value.
 
-Some settings are not in `.env` but in the database, edited on their own admin pages: plans and
-locations (servers), incidents and status components (status), Discord servers, rules and roles
-(Discord, rux).
+## Environment variables
 
-After editing `.env` by hand:
+### Required
 
-```bash
-sudo -u www-data php artisan config:clear
-```
+| Variable | Example | What it does |
+|---|---|---|
+| `DATABASE_URL` | `postgresql://calagopus:<password>@127.0.0.1:5432/calagopus` | The PostgreSQL database. With `DATABASE_URL_PRIMARY` set, only reads go here |
+| `APP_ENCRYPTION_KEY` | output of `openssl rand -hex 32` | Encrypts the stored secrets. Set once, never change it, keep a copy with your backups. `CHANGEME` is refused |
 
-## Panel-wide
+### Database and cache
 
-| Setting | Why |
+| Variable | Default | What it does |
+|---|---|---|
+| `DATABASE_MIGRATE` | `false` | `true` applies pending migrations on every start. Set it to `true` on one instance, or run `panel-rs database-migrator migrate` before starting a new release |
+| `DATABASE_URL_PRIMARY` | unset | A primary for writes, when `DATABASE_URL` is a read replica |
+| `REDIS_MODE` | `redis` | `redis`, or `sentinel` for Redis Sentinel |
+| `REDIS_URL` | `redis://localhost` | The Redis or Valkey server and database number, e.g. `redis://127.0.0.1:6379/3` |
+| `REDIS_SENTINEL_CLUSTER` | unset | With `REDIS_MODE=sentinel`: the master's name |
+| `REDIS_SENTINELS` | unset | With `REDIS_MODE=sentinel`: the sentinels as comma-separated `host:port` |
+| `REDIS_KEY_PREFIX` | unset | Puts every key under `<prefix>::`, so several apps can share one Redis |
+
+### Listening and proxies
+
+| Variable | Default | What it does |
+|---|---|---|
+| `BIND` | `0.0.0.0` | The address to listen on. Use `127.0.0.1` behind nginx |
+| `PORT` | `8000` | The port to listen on |
+| `APP_TRUSTED_PROXIES` | empty | Comma-separated CIDRs whose `X-Forwarded-For` is believed: your reverse proxy, and your CDN's ranges. See [web server](/panel/web-server/#real-client-addresses) |
+| `APP_BLOCKED_CIDRS` | the private and reserved ranges | Networks the panel refuses to fetch user-provided URLs from (an egg imported from a URL, for example). Empty turns the protection off |
+| `APP_ENABLE_WINGS_PROXY` | `false` | Lets the panel proxy browser requests to the nodes, for nodes the browser cannot reach directly (a home network). Not meant for many nodes or much traffic |
+| `APP_DISABLE_FRONTEND` | `false` | Serves the API only, for a frontend hosted elsewhere |
+
+### Instances and logs
+
+| Variable | Default | What it does |
+|---|---|---|
+| `APP_PRIMARY` | `true` | Whether this instance runs the background tasks (samplers, scans, limbo, the Discord bots …). With several instances on one database, exactly one has `true` |
+| `APP_LOG_DIRECTORY` | unset | Also writes the log to `<dir>/panel.log`, with a daily file per day kept for 30 days. Unset: the journal only |
+| `APP_DEBUG` | `false` | Debug logging from the start. Admins can also switch it on and off at runtime on Admin › Overview › Health |
+| `APP_REQUEST_LOG_LIMIT` | `250` | Requests per second written to the log before the rest are only counted; `0` logs all |
+| `APP_USE_INTERNAL_CACHE` | `true` | Keeps short-lived values in memory as well as Redis: faster, uses more memory |
+| `APP_USE_DECRYPTION_CACHE` | `false` | Keeps decrypted secrets cached in memory and Redis: faster, slightly less secure |
+| `SENTRY_URL` | unset | Sends errors to a Sentry project |
+| `SENTRY_TRACING_SAMPLE_RATE` | `1.0` | Share of requests traced to Sentry |
+| `SERVER_NAME` | unset | Adds an `X-Server-Name` header to every response and names the instance in Sentry. Useful to tell instances apart |
+
+## Admin › Settings
+
+Each group is its own entry under Settings in the admin sidebar; each tab saves its own fields.
+Tabs marked "upstream" work as in Calagopus.
+
+| Group | Tabs |
 |---|---|
-| `APP_ENV=production` | The Discord bots refuse to connect on anything else, so a copy of your panel can't answer on Discord in its place. Use another value on test panels. |
-| `APP_NAME="Example Host"` | The panel's name wherever users see it. For example, Plus and PlusPlus show as "Example Host Plus" and "Example Host PlusPlus", and the in-game ad and the ad-block notice name the panel. |
-| `APP_URL=https://panel.example.com` | Links in mail, the agents' install commands and signed URLs are built from it. The ad-block notice asks users to allow ads on its host. |
-| `REDIS_QUEUE_RETRY_AFTER` / `DB_QUEUE_RETRY_AFTER` | Above the queue worker's timeout, see [Queue worker and scheduler](/panel/queue-and-scheduler/). |
-| Mail (Pelican's settings) | Account mail and some notices go out by mail. |
+| General | Application (name, URL, sign-in methods, two-factor, sessions, telemetry), Metadata ([theme colour, seasonal theme](/panel/branding/)), Storage (upstream: where uploaded files go), [Status Page](/status/status-page/), Updates (upstream) |
+| Mail | Mail, Mail Templates (upstream) |
+| Accounts | User (upstream), [noprofit.space](/accounts/noprofit/), [Discord](/discord/integration/), [rux](/discord/rux/), Webauthn (upstream), [Welcome Tour](/accounts/welcome-tour/), [Reviews](/accounts/reviews/) |
+| Hosting | Server (upstream), [Games](/servers/create-server/), [Minecraft](/games/minecraft/), [FiveM](/games/fivem/), [Subdomains](/servers/subdomains/), [Devboxes](/servers/devboxes/), [Placement](/nodes/placement/), [Start Queue](/starts/start-queue/), [Limbo](/starts/limbo/), [Recovery](/nodes/failover/) |
+| Security | Captcha (upstream), Ratelimits (upstream), [Abuse](/safety/abuse/), Activity (upstream) |
+| Economy | [Resource Store, Tokens, Memberships](/economy/credits-and-tokens/), [Partners](/economy/partners/) |
+| Ads | [Placement, Adsterra, Monetag, Waiting Room, Ad Blockers, In-Game](/economy/ads/) |
+| AI | [neo](/ai/neo/), [neo on Discord](/ai/neo-discord/) |
 
-## A first pass, plugin by plugin
+Other admin pages that hold configuration: Admin › Plans ([creating servers](/servers/create-server/)),
+Admin › Domains ([subdomains](/servers/subdomains/)), Admin › Status ([status page](/status/status-page/)),
+Admin › Abuse ([abuse protection](/safety/abuse/)), Admin › Sponsored Banners ([ads](/economy/ads/)),
+Admin › Partners ([partner program](/economy/partners/)).
 
-Go through these in order. Each line links to the page with the details.
+## Day one
 
-1. **[Servers](/plugins/servers/)**: locations, plans and the deployment tags
-   (`UCS_DEPLOYMENT_TAGS`). With tags set, new servers only land on nodes that carry one of them,
-   so a half-set-up node stays out of rotation until you tag it.
-2. **[Economy](/plugins/economy/)**: the resource tiers, store prices and what credits buy.
-3. **[Ads](/plugins/ads/)**: ads are **on** by default (`ADS_ENABLED=true`). Add your own ad units,
-   or turn ads off, or disable the plugin. In-game ads are on too: Minecraft servers get "This
-   server is powered by" followed by `APP_NAME`.
-4. **[Abuse](/plugins/abuse/)**: `ABUSE_MODE` starts at `report` (findings are recorded, nothing is
-   suspended). Switch to `suspend` once you trust the findings.
-5. **[Minecraft](/plugins/minecraft/)**: the CurseForge API key for modpacks.
-6. **[Status](/plugins/status/)**: `STATUS_EXPORT_PATH` and the health URLs, if you run a
-   [status page](/status/status-export/).
-7. **[Storage](/plugins/storage/)**: set up after the [storage box](/storage/storage-box/) exists.
-   Failover defaults to `auto`; it restores from the storage box's copies, so it has nothing to
-   work with until the storage agent runs.
-8. **[Discord](/plugins/discord/)** and **[AI](/plugins/ai/)**: after creating the
-   [Discord applications](/discord/membership-bot/) and adding an AI provider for [neo](/discord/neo/).
-9. **[Limbo](/plugins/limbo/)** and **[Devbox](/plugins/devbox/)** ship switched off
-   (`LIMBO_ENABLED`, `DEVBOX_ENABLED`); turn them on when their nodes are ready.
-10. **[Subdomains](/plugins/third-party/)**: your Cloudflare zone and API token.
+After the [first admin](/panel/first-admin/), set at least:
 
-Then run the [doctor](/panel/doctor/): it names the settings that are still missing.
-
-## Secrets
-
-Several settings are shared secrets between the panel and an agent (storage, abuse) or tokens for
-outside services (Discord, AI providers, CurseForge, Cloudflare). They live only in `.env` and the
-database. Keep `.env` readable by the panel user only:
-
-```bash
-sudo chown www-data:www-data /var/www/pelican/.env
-sudo chmod 600 /var/www/pelican/.env
-```
-
-Never copy a production `.env` to a test panel: give the test panel its own Discord applications
-and agent secrets.
+1. Admin › Settings › General › Application: Name and URL.
+2. Admin › Settings › Mail: a working mail transport, then send yourself a test mail.
+3. Admin › Settings › Security › Captcha: a captcha before you open registration.
+4. Admin › Settings › General › Application: Enable Registration, once the captcha works.
+5. Admin › Settings › Hosting › Games: which games users can create, and their allowance
+   ([creating servers](/servers/create-server/)).
+6. Admin › Settings › Economy › Tokens: **Panel access** is on by default and costs 5 tokens every
+   30 days. Until users have a way to earn tokens (daily tokens or a sponsored-link provider), turn
+   it off, or everyone without a membership is sent to the Panel Access page instead of their
+   servers ([credits, tokens and memberships](/economy/credits-and-tokens/)).

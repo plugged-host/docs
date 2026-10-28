@@ -1,183 +1,65 @@
 ---
 title: Commands
-description: Every artisan command the plugged.host plugins add, and what the scheduler runs on its own.
+description: The panel-rs and wings-rs command-line commands, and how to run them with the panel's environment.
 ---
 
-All commands run as the panel user from the panel directory:
+## Running panel commands
+
+`panel-rs` without arguments starts the panel. With a subcommand it reads the environment, does the
+job and exits; it never starts a second panel. Run subcommands with the same environment and user as
+the service:
 
 ```bash
-cd /var/www/pelican
-sudo -u www-data php artisan plugged-host:doctor
+sudo systemd-run --quiet --pty --collect \
+  -p User=calagopus -p WorkingDirectory=/var/lib/calagopus \
+  -p EnvironmentFile=/etc/calagopus/panel.env \
+  /opt/calagopus/current/panel-rs <command>
 ```
 
-The **Scheduled** column is what the plugin puts on Laravel's scheduler (driven by the
-[cron line](/panel/queue-and-scheduler/)); it only runs while the plugin is enabled. Commands marked
-*internal* are started by a bot's gateway daemon and are not meant to be run by hand.
-`sudo -u www-data php artisan schedule:list` shows the schedule of your own panel.
+`panel-rs <command> --help` lists a command's options. Most commands take `--json` for output a
+script can read.
 
-Add `--help` to any command for its arguments.
+## panel-rs
 
-## Core
+| Command | What it does |
+|---|---|
+| `version` | Prints the release (`release v3.0.2`) and Calagopus's version |
+| `diagnostics` | Collects a report for troubleshooting; asks before uploading it ([troubleshooting](/panel/troubleshooting/#diagnostics)) |
+| `completions <shell>` | Shell completions |
+| `service-install` | Writes upstream's basic systemd (or OpenRC) unit for the binary. These docs use [their own unit](/panel/install/#4-the-systemd-unit) instead |
+| `users create` | Creates a user: `--username`, `--email`, `--password`, `--name-first`, `--name-last`, `--admin true`. Asks for what is missing |
+| `users reset-password --user <user>` | Sets a new password (username, email or UUID) |
+| `users disable-2fa --user <user>` | Removes two-factor authentication from an account |
+| `users verify-email --user <user>` | Marks the email address as verified |
+| `nodes create` | Creates a node from the command line (location, name, URL, SFTP, memory, disk) |
+| `nodes reset-token <node>` | Issues a new token for a node (name or UUID); reconfigure its Wings afterwards |
+| `nests create` | Creates a nest |
+| `nests mass-import <nest> <dir>` | Imports every egg in a folder into a nest ([eggs](/nodes/eggs/)) |
+| `backups s3 import` | Imports backups that exist in an S3 backup configuration but not in the panel |
+| `oobe reset --step <step>` | Puts the first-run setup back to a step |
+| `oobe finish` | Marks the first-run setup as finished |
+| `devboxes edge-certificates --dir <dir>` | Writes the certificates the browser edge for devboxes needs ([devboxes](/servers/devboxes/)) |
+| `database-migrator status` | Shows which migrations are applied |
+| `database-migrator migrate` | Applies pending migrations (when `DATABASE_MIGRATE=false`) |
 
-[Core plugin](/plugins/core/)
+The `import` and `extensions` groups are upstream's. The binary build does not support extensions,
+and plugged.host's features are in the source, not extensions.
 
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:doctor` `<plugin>` | Check that the plugged.host plugins have what they need and are healthy. |  |
-| `plugged-host:sample-nodes` | Probe every node's wings once and record reachability, latency and load. | every minute |
+## wings-rs
 
-## Servers
+Always with `--config` ([Wings](/nodes/wings/)):
 
-[Servers plugin](/plugins/servers/)
+| Command | What it does |
+|---|---|
+| `wings-rs --config <file>` | Runs Wings |
+| `wings-rs --config <file> configure --enroll <code> --panel-url <url>` | Writes the node's configuration from a one-time enrollment code |
+| `wings-rs version` | Prints the Wings version |
+| `wings-rs --config <file> diagnostics` | Collects a report for troubleshooting |
 
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host-servers:transfers` `--status` `--max=600` | Drive server transfers: stop, copy with live progress, retry, start. | every minute |
-| `plugged-host:allowance-cuts` `--dry-run` | Bring servers down to fit allowances that were lowered (the base went down on noprofit.space). | every 5 minutes |
-| `plugged-host:deploy-pause` `--show` | Pause deployment on nodes over their load line and reopen calmed ones. | every minute |
-| `plugged-host:plusplus-expire` `--dry-run` | Move servers off Premium locations and trim CPU for accounts whose PlusPlus ran out. | every 5 minutes |
-| `plugged-host:trim-memory` `<plan>` `--apply` | Take memory noprofit.space asked back off users' servers, evenly. |  |
+## The panel's API
 
-## Economy
-
-[Economy plugin](/plugins/economy/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:credits-reset` `--dry-run` `--force` | Zero every credit balance and Discord invite counter, keeping purchased resources and the transaction history. |  |
-
-## Minecraft
-
-[Minecraft plugin](/plugins/minecraft/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:minecraft-setup` `--update` `--dry-run` | Import the Minecraft: Java Edition egg this plugin ships (with --update, over the existing one). |  |
-
-## FiveM
-
-[FiveM plugin](/plugins/fivem/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:fivem-setup` `--servers` `--dry-run` | Put the cfx eggs (and with --servers, every FiveM server) on the FiveM image. |  |
-
-## Devbox
-
-[Devbox plugin](/plugins/devbox/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:devbox-reconcile` `--dry-run` | Stop idle devboxes, finish stops, kill stray devbox containers and remove orphaned, moved or unused devboxes. | every minute |
-| `plugged-host:devbox-setup` | Install or update the devbox egg and the account that owns devbox servers. |  |
-| `plugged-host:devbox-web-setup` `--no-dns` | Set up VS Code in the browser for devboxes: CA, edge certificate and the running devboxes' DNS records. |  |
-
-## Limbo
-
-[Limbo plugin](/plugins/limbo/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:limbo-sweep` `--dry-run` `--status` | Stop and hibernate idle servers, and hand hibernated ones to the limbo node. | every minute |
-
-## Queue
-
-[Queue plugin](/plugins/queue/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:queue-refund-priority-passes` `--dry-run` | Close the priority passes Plus replaced and refund what was still running. |  |
-| `plugged-host:queue-sweep` `--status` `--release` | Release start-queue entries whose node has room or whose wait has run out. | every minute |
-
-## Ads
-
-[Ads plugin](/plugins/ads/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:ads-in-game` `--dry-run` `--all` | Send the in-game ad to the Minecraft servers whose turn it is. | every minute |
-
-## Storage
-
-[Storage plugin](/plugins/storage/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:deleted-servers` `--url=` `--extend=` `--days=7` `--all` | List deleted servers whose copy on the storage box is kept, with a download link or a longer hold. |  |
-| `plugged-host:failover-sweep` `--dry-run` `--status` `--drill=` `--resume=` | Detect offline nodes and (in auto mode) recover their servers from the storage mirror. | every minute |
-| `plugged-host:storage-setup` `--backup` | Print the command that sets the storage box (or --backup: the backup server) up (one-time code, valid for an hour). |  |
-
-## Abuse
-
-[Abuse plugin](/plugins/abuse/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:abuse-purge` `--dry-run` | Delete servers suspended by the abuse checks once ABUSE_DELETE_AFTER_HOURS have passed. | hourly |
-| `plugged-host:abuse-watch` | Watch for servers pinned at their CPU limit and check them for abuse. | every minute |
-| `plugged-host:scan-abuse` `--suspend` `--dry-run` `--server=*` `--egg=` `--all` | Check servers for crypto miners, VPN/proxy cores, DDoS and scanning tools, backdoors and obfuscated code. | every 3 hours (`--suspend`) |
-
-## Status
-
-[Status plugin](/plugins/status/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:status-collect` | Collect public service telemetry and atomically export the status page data. | every minute |
-| `plugged-host:status-export` | Regenerate the public status JSON and incident feed. |  |
-| `plugged-host:status-prune` | Delete status telemetry outside the configured retention period. | daily, 03:17 |
-
-## Discord
-
-[Discord plugin](/plugins/discord/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host:discord-boost-set` `<user>` `<count>` | Manually set a user's Discord boost count and award credits. |  |
-| `plugged-host:discord-bot` | *Internal.* Run the plugged.host Discord Bot gateway daemon to handle slash commands (/invites) and track joins and leaves. |  |
-| `plugged-host:discord-bot-install` `--dry-run` `--no-start` | Install the crontab trigger that keeps the plugged.host Discord gateway daemon alive, then start it. |  |
-| `plugged-host:discord-bot-supervise` `--status` `--start` `--stop` `--restart` `--force` | Keep the plugged.host Discord gateway daemon running, or start/stop/inspect it by hand. | every minute |
-| `plugged-host:discord-invite-baseline` `--force` `--dry-run` `--show` | Freeze pre-tracking Discord invite totals from invite.uses as a display-only leaderboard baseline. |  |
-| `plugged-host:discord-invite-maturity` `--inviter=` `--dry-run` | Award Discord invite rewards whose escrow window has elapsed. | every 5 minutes |
-| `plugged-host:discord-invite-reconcile` `--limit=200` `--restore` `--dry-run` | Verify tracked Discord invitees are still in the guild, uncounting and clawing back the ones who left. | hourly, at :23 |
-| `plugged-host:discord-register-commands` `--global` | Register Discord bot slash commands (/invites, /topinvites) with Discord API. |  |
-| `plugged-host:discord-sync` `--user=` `--force` | Synchronize Discord server membership and update panel roles for users. | hourly |
-
-## AI
-
-[AI plugin](/plugins/ai/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `plugged-host-ai:neo-chat` `<user>` `<message>` `--server=` `--approve` `--new` | Ask neo something as a given user and print the transcript. |  |
-| `plugged-host-ai:neo-prune` | Delete neo conversations (panel and Discord) older than the retention period. | daily, 03:40 |
-| `plugged-host:neo-bot-ask` `<discord_id>` `<message>` `--dm` `--name=` `--new` | Ask neo on Discord a question from the terminal (prints the answer). |  |
-| `plugged-host:neo-bot-gateway` | *Internal.* Run neo's Discord gateway daemon (supervised by plugged-host:neo-bot-supervise). |  |
-| `plugged-host:neo-bot-handle` `<message>` | *Internal.* Answer a message sent to neo on Discord (started by neo's gateway daemon). |  |
-| `plugged-host:neo-bot-supervise` `--status` `--start` `--stop` `--restart` `--force` | Keep neo's Discord gateway daemon running, or start/stop/inspect it by hand. | every minute |
-| `plugged-host:rux-ai` | Fetch neo's AI providers for rux now and show them. |  |
-| `plugged-host:rux-gateway` | *Internal.* Run rux's Discord gateway daemon (supervised by plugged-host:rux-supervise). |  |
-| `plugged-host:rux-handle` `<message>` | *Internal.* Carry out one order given to rux (started by the rux gateway daemon). |  |
-| `plugged-host:rux-rule-check` `<hit>` | *Internal.* Check a message against rux's standing rules and act on it (started by the rux gateway daemon). |  |
-| `plugged-host:rux-spam` `<caught>` | *Internal.* Delete spam rux caught and warn its author (started by the rux gateway daemon). |  |
-| `plugged-host:rux-supervise` `--status` `--start` `--stop` `--restart` `--force` | Keep rux's Discord gateway daemon running, or start/stop/inspect it by hand. | every minute |
-| `plugged-host:rux-tick` | rux housekeeping: draw due giveaways, retry payouts, lift ran-out bans. | every minute |
-| `plugged-host:rux-watch` | Check the messages queued from rux's watched channels. |  |
-
-## noprofit.space
-
-[noprofit.space plugin](/plugins/noprofit/)
-
-| Command | What it does | Scheduled |
-|---|---|---|
-| `noprofit:accounts-sync` `--full` | Send server usage and Discord state of linked accounts to noprofit.space. | every minute, `--full` every 15 minutes |
-| `noprofit:credits-sync` `--full` | Keep panel credits in step with noprofit.space. | every minute |
-| `plugged-host:discord-giveaways-export` `<file>` | Export giveaway history for noprofit.space (noprofit:giveaways-import). |  |
-## Scheduled tasks without a command
-
-| Task | Plugin | Scheduled |
-|---|---|---|
-| Doctor scheduler tick (proves cron runs) | Core | every minute |
-| Doctor queue heartbeat (a tiny queued job, proves the worker runs) | Core | every 5 minutes |
-| Prune expired rows of the database cache store (only when the cache driver is `database`) | Core | hourly |
-| Prune rux's stored messages | AI | daily, 04:17 |
+The panel documents its own HTTP API at `https://panel.example.com/docs/api`, generated from the
+routes of the running build, plugged.host's included: the client API at `/docs/api/client` and the
+admin API at `/docs/api/admin`, each with "Try It", and their OpenAPI documents at
+`/docs/api/client.json` and `/docs/api/admin.json` (`/openapi.json` is the whole document). Only
+signed-in users see them.

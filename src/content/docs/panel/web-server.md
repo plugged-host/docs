@@ -1,16 +1,34 @@
 ---
 title: Web server
-description: The nginx vhost for the panel, with the status export location and the upload and timeout limits the plugins need.
+description: nginx with TLS in front of the panel, with websockets, long requests and cached frontend assets.
 ---
 
-The panel is a normal Laravel app behind nginx and PHP-FPM. This vhost is Pelican's, with two
-plugged.host additions: the `/data/` location for the [status export](/status/status-export/),
-and longer timeouts for the plugins' slow requests (modpack uploads, archive downloads).
+The panel listens on the loopback address (`BIND=127.0.0.1`, `PORT=8000`) and nginx serves it to
+the world over HTTPS. The panel needs nothing special from the proxy: pass every request through,
+allow websocket upgrades and long-running requests, and tell the panel which proxies to trust.
 
-Save it as `/etc/nginx/sites-available/pelican.conf`, link it into `sites-enabled`, and replace
-`panel.example.com`, the certificate paths and the PHP-FPM socket with yours.
+## The site
+
+`/etc/nginx/sites-available/panel.example.com.conf`:
 
 ```nginx
+map $http_upgrade $panel_connection_upgrade {
+    default upgrade;
+    ''      '';
+}
+
+# Keep-alive connections to the panel instead of a new one per request.
+upstream panel_backend {
+    server 127.0.0.1:8000;
+    keepalive 64;
+    keepalive_timeout 60s;
+}
+
+# The frontend's assets have hashed names and never change: nginx keeps them on disk after the
+# first request. The key includes Accept-Encoding because the panel serves gzip variants.
+proxy_cache_path /var/cache/nginx/panel-assets levels=1:2 keys_zone=panel_assets:32m
+                 max_size=1g inactive=30d use_temp_path=off;
+
 server {
     listen 80;
     server_name panel.example.com;
@@ -22,87 +40,89 @@ server {
     http2 on;
     server_name panel.example.com;
 
-    root /var/www/pelican/public;
-    index index.php;
-
-    access_log /var/log/nginx/pelican.app-access.log;
-    error_log  /var/log/nginx/pelican.app-error.log error;
-
-    client_max_body_size 100m;
-    client_body_timeout 120s;
-    sendfile off;
-
-    ssl_certificate /etc/letsencrypt/live/panel.example.com/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/panel.example.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/panel.example.com/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:panel_ssl:10m;
+    ssl_session_timeout 1d;
 
-    add_header X-Content-Type-Options nosniff;
-    add_header X-Robots-Tag none;
-    add_header Content-Security-Policy "frame-ancestors 'self'";
-    add_header X-Frame-Options DENY;
-    add_header Referrer-Policy same-origin;
+    # Uploads through the panel (eggs, world archives, files).
+    client_max_body_size 100m;
 
-    # The status export (plugged-host-status, STATUS_EXPORT_PATH). The status Worker
-    # and your website read it from here.
-    location /data/ {
-        alias /var/www/status-export/data/;
-        add_header Access-Control-Allow-Origin "*" always;
-        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
-        default_type application/json;
-        try_files $uri =404;
+    location /assets/ {
+        proxy_pass http://panel_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+
+        proxy_cache panel_assets;
+        proxy_cache_key "$scheme$request_method$host$request_uri$http_accept_encoding";
+        proxy_cache_valid 200 1y;
+        proxy_cache_lock on;
+        proxy_cache_use_stale error timeout updating;
     }
 
     location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:/run/php/php8.5-fpm.sock;
-        fastcgi_index index.php;
-        include fastcgi_params;
-        fastcgi_param PHP_VALUE "upload_max_filesize = 100M \n post_max_size=100M";
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_param HTTP_PROXY "";
-        fastcgi_intercept_errors off;
-        fastcgi_buffer_size 64k;
-        fastcgi_buffers 16 32k;
-        fastcgi_busy_buffers_size 128k;
-        fastcgi_connect_timeout 300;
-        fastcgi_send_timeout 300;
-        fastcgi_read_timeout 300;
-    }
-
-    location ~ /\.ht {
-        deny all;
+        proxy_pass http://panel_backend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $panel_connection_upgrade;
+        proxy_buffering on;
+        proxy_request_buffering off;
+        # Websockets and streamed answers (neo) stay open for a long time.
+        proxy_read_timeout 1h;
+        proxy_send_timeout 1h;
     }
 }
 ```
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/pelican.conf /etc/nginx/sites-enabled/pelican.conf
+sudo install -d -o www-data /var/cache/nginx/panel-assets
+sudo ln -s /etc/nginx/sites-available/panel.example.com.conf /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Leave the `/data/` block out if you don't run the status plugin. If you do, create the export
-directory and give it to the panel user:
+Get the certificate however you like (for example `certbot certonly --nginx -d panel.example.com`,
+or a CDN's origin certificate).
+
+## Real client addresses
+
+The panel logs activity, rate-limits and checks sign-ins by the client's address. Behind nginx it
+only sees `127.0.0.1` unless it trusts the proxy's `X-Forwarded-For`:
 
 ```bash
-sudo mkdir -p /var/www/status-export/data
-sudo chown -R www-data:www-data /var/www/status-export
+# /etc/calagopus/panel.env
+APP_TRUSTED_PROXIES="127.0.0.1/32,::1/128"
 ```
 
-## More host names
+Behind a CDN such as Cloudflare, add the CDN's published address ranges to the same list
+(comma-separated CIDRs), or every visitor looks like the CDN. Restart the panel after changing it.
 
-- **Backups portal** (`plugged-host-storage`): the panel itself, answering on its own name such
-  as `backups.example.com`. Its vhost is on [Failover](/storage/failover/).
-- **Devboxes in the browser** (`plugged-host-devbox`): see [Devboxes](/nodes/devboxes/).
+## A page while the panel restarts
 
-## Behind Cloudflare
+During an [update](/panel/updating/) the panel is down for a few seconds and nginx answers 502.
+To show a page that says so instead, add a static file of your own:
 
-The panel works proxied through Cloudflare. Two things to know:
+```nginx
+    error_page 502 503 504 /maintenance.html;
+    location = /maintenance.html {
+        root /var/www/panel-maintenance;
+        internal;
+        add_header Cache-Control "no-store" always;
+        add_header Retry-After "15" always;
+    }
+```
 
-- Node names must stay **DNS only**. Browsers open the console websocket straight to Wings, and
-  players connect to the node name.
-- Cloudflare's bot protection can block API clients and AI agents that call the panel's
-  `/api`. If you rely on API access, allow those paths in your Cloudflare security rules.
+## Health check
+
+`GET /up` answers `200 ok` while the panel reaches its database within 3 seconds and `503`
+otherwise. Point load balancers and uptime monitors at it.
+
+## Next
+
+Go through [configuration](/panel/configuration/), then add your first [node](/nodes/wings/).
