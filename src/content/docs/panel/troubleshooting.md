@@ -1,6 +1,6 @@
 ---
 title: Troubleshooting
-description: Where to look when the panel misbehaves: the Health page, logs, diagnostics, and the usual causes.
+description: "Where to look when the panel misbehaves: the Health page, logs, diagnostics, and the usual causes."
 ---
 
 ## Admin › Overview › Health

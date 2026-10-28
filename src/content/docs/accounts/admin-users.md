@@ -1,6 +1,6 @@
 ---
 title: Admin › Users
-description: What the panel adds to the user admin: deleting a user together with their servers, and the Discord column and search.
+description: "What the panel adds to the user admin: deleting a user together with their servers, and the Discord column and search."
 ---
 
 Admin › Users is the panel's list of accounts. On top of Calagopus's user admin, the panel lets an
