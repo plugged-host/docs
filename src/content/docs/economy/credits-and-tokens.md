@@ -1,13 +1,15 @@
 ---
 title: Credits, tokens and memberships
-description: The panel's two currencies, the Resource Store and its sales, the CPX Research survey wall and the token-earning link providers, the two memberships with burst cores, and paid panel access.
+description: The panel's two currencies, the Resource Store and its sales, the CPX Research survey wall and the token-earning link providers, the daily streak, double tokens, first-week tasks, referrals and profile badges, the two memberships with burst cores, renewals and gifts, and paid panel access.
 ---
 
-The economy lets users grow their allowance and pay for extras. **Credits** buy CPU, memory and disk in the Resource Store, for good. **Tokens**
-are earned by taking surveys (CPX Research) or completing sponsored links and pay for the two
-**memberships**, restores of parked servers and, if you want, the panel itself. Users use Account ›
-Resource Store, Account › Tokens and Account › Membership; admins set the prices and the token
-providers and can change any user's balances.
+The economy lets users grow their allowance and pay for extras. **Credits** buy CPU, memory and
+disk in the Resource Store, for good. **Tokens** are earned by taking surveys (CPX Research),
+completing sponsored links, a daily streak, first-week tasks and referrals, and pay for the two
+**memberships**, [server upgrades](/servers/server-upgrades/), restores of parked servers, a few
+other extras and, if you want, the panel itself. Credits and tokens are separate currencies:
+nothing turns one into the other. Users use Account › Resource Store, Account › Tokens and Account ›
+Membership; admins set the prices and the token providers and can change any user's balances.
 
 ## What it does
 
@@ -35,28 +37,37 @@ providers and can change any user's balances.
 
 ### Sales
 
-A sale takes a percentage off every price in the Resource Store for a while. It covers the store
-only, not the memberships.
+A sale takes a percentage off every price it covers for a while: the Resource Store (the default),
+the memberships, or both.
 
-- Set **Discount** (0 is off), a **Name** (empty: "Sale"), and optionally **Starts** and **Ends**,
-  in your browser's time zone. Without Starts it runs right away; without Ends it runs until the
-  discount is set back to 0.
-- A sale price is the full price less the discount, rounded half up. 100 % makes the offers free.
-- While it runs, a banner heads the store ("25% off everything in the store until ...") and every
-  offer shows its full price struck through.
-- The window is checked on every store visit and purchase: a price shown before the sale started
-  or after it ended has moved, so that purchase is refused and the page shows the current prices.
+- Set **Discount** (0 is off), a **Name** (empty: "Sale"), what it **Covers**, and optionally
+  **Starts** and **Ends**, in your browser's time zone. Without Starts it runs right away; without
+  Ends it runs until the discount is set back to 0.
+- A sale price is the full price less the discount, rounded half up: 15 tokens at 25 % off is 11.
+  100 % makes the offers free.
+- While it runs, a banner heads the store ("25% off everything in the store until ...") or the
+  Membership page ("25% off every membership until ..."), and every offer shows its full price
+  struck through.
+- On the memberships it applies to purchases, [gifts](#gifts) and [automatic renewals](#auto-renew),
+  and to the second membership's credit price when it has one.
+- The window is checked on every visit and purchase: a price shown before the sale started or after
+  it ended has moved, so that purchase is refused and the page shows the current prices.
 
 ### Tokens, surveys and sponsored links
 
-- Account › Tokens shows the balance, what tokens pay for, one row per way to earn (the reward,
-  today's count against the cap, and **Earn with ...**) and the recent token activity. The
+- Account › Tokens shows the balance, the [daily streak](#daily-streak) and the
+  [first-week tasks](#getting-started), what tokens pay for, one row per way to earn (the reward,
+  today's count against the cap, and **Earn with ...**), the recent token activity and, at the end,
+  the [referral link](#referrals). A running [double-token window](#double-tokens) heads it. The
   [CPX Research](#cpx-research) survey wall, when set up, is the first row, with the page's filled
   button (**Take a survey**): it pays the most.
 - **Daily Tokens**, when above 0, are given once a day, the first time the account looks after
   midnight UTC.
-- Tokens also pay for [limbo](/starts/limbo/) restores and [subdomains](/servers/subdomains/)
-  where those cost tokens.
+- Tokens also pay for, where each is on: [limbo](/starts/limbo/) restores,
+  [subdomain](/servers/subdomains/) deposits, [server upgrades](/servers/server-upgrades/), the
+  waiting room's [day pass](/economy/ads/#day-pass), one more day of
+  [neo](/ai/neo/#extra-usage-for-tokens) usage, [profile badges](#profile-badges) and
+  [gifts](#gifts) of a membership.
 
 Earning a token through a link works like this:
 
@@ -118,11 +129,80 @@ comes back to the Tokens page.
 - The token history shows "Earned with CPX Research" and "Reversed: CPX Research"; a paid survey is
   logged as `account:tokens.earn`.
 
+### Daily streak
+
+Under the balance on Account › Tokens, **Claim today's tokens** pays once a day (days start at
+midnight UTC), with a dot per day of the week.
+
+- A claim the day after the last one is the next day of the streak; a missed day starts again at
+  day 1.
+- With the default **Tokens per Day**, days 1 to 7 pay 0.25, 0.25, 0.5, 0.5, 0.75, 0.75 and 1
+  token, then 1 a day. Parts of a token are saved on the account like a link's and paid as whole
+  tokens once they add up.
+- While today's tokens wait, the claim is the page's filled button and the sidebar's tokens row has
+  a small dot.
+- **Daily Tokens** (above) is separate and unchanged.
+- The token history shows "Daily streak"; activity `account:tokens.streak`.
+
+### Double tokens
+
+A window in which every sponsored link and every CPX Research survey pays more: **Bonus** percent
+(100 doubles them), with a **Name**, **Starts** and **Ends**, set like a [sale](#sales).
+
+- The bonus is added when the tokens are paid: a link of 1.5 tokens pays 3 while the bonus is 100.
+  The daily caps count links and surveys as before.
+- While it runs, a banner heads the Tokens page ("Double tokens until Sun 22:00", under the name
+  when it has one), the links' rows show what they pay now, and the survey row says "Every survey
+  pays 100% more right now."
+- The daily streak, the first-week tasks and referrals pay what they say, without the bonus.
+- [rux](/discord/rux/#tokens) can announce the window on Discord.
+
+### Getting started
+
+For **Days Shown** (14) after sign-up, a "Getting started" list under the balance offers four tasks:
+link a Discord account (while Admin › Settings › Accounts › Discord is on), create a server, start
+the server, and earn tokens once with a link or a survey.
+
+- Each pays **Tokens per Task** (1) once per account. **Claim** checks the task again; a task not
+  done yet has a button to where it is done.
+- The list is gone once every task is claimed or the days have passed.
+- The token history shows "Getting started"; activity `account:tokens.task`.
+
+### Referrals
+
+Every account has a referral link, `https://panel.example.com/r/<code>`, shown with a copy button
+at the end of Account › Tokens with the rule in one line and the friends who signed up with it.
+
+- Opening the link keeps the code in the browser for 30 days and goes to sign-in. A new account made
+  by registering, by signing up through an OAuth provider, or (with noprofit.space) by a first
+  sign-in that creates a panel user, counts. An existing account never gets a referrer.
+- Not counted: the referrer's own account, and a sign-up from the same address as the referrer's
+  newest session.
+- Once the friend has earned **Friend Earns** tokens (10) themselves (links, surveys, the streak, the
+  first-week tasks; not an admin's change), the referrer gets **Tokens per Friend** (5), once per
+  friend, and the notification "Referral reward". A survey taken back later does not undo it.
+- At most **Paid per Month** friends (10) are paid per referrer in any 30 days; a friend over that
+  waits until the window frees up.
+- The page lists the newest 50 friends, each with "3 of 10 tokens earned" or "Paid +5". The token
+  history shows "Referral".
+
+### Profile badges
+
+Preset badges (Supporter, Early Bird, Night Owl, OG, Builder, Explorer), bought on the Account
+page's **Badges** card for **Tokens per Badge** (5) each, for good.
+
+- The account shows one badge, or none (**Show no badge**); the first one bought shows at once.
+- The badge sits next to the name in the sidebar, on the subusers list of servers the account is on
+  and in their [server chat](/servers/server-chat/).
+- Bought badges stay shown when selling them is turned off.
+- The token history shows "Profile badge"; activity `account:badge.purchase`.
+
 ### Memberships
 
 Two memberships, always the panel's own. Their names are settings (Plus and Premium by default).
 Both are bought for a number of days at a time: buying again before one ends adds to the time left,
-and nothing renews by itself. Neither needs the other: the second gives everything the first does.
+and nothing renews by itself unless the member turns on [auto-renew](#auto-renew). Neither needs the
+other: the second gives everything the first does.
 
 | | First membership | Second membership |
 |---|---|---|
@@ -142,6 +222,9 @@ and nothing renews by itself. Neither needs the other: the second gives everythi
   memberships side by side with a buy button per offer ("30 days · 15 tokens"), what each adds over
   the free tier, and the questions users ask before buying. Buying takes the tokens or credits and
   adds the days in one step, or not at all.
+- An offer the balance does not cover says what is missing ("6 more tokens to go") and opens the
+  Tokens page (the Resource Store for credits). A purchase is sent with the price the user saw: one
+  that moved since (a sale started or ended) buys nothing, and the page shows the new prices.
 - Memberships also raise [neo](/ai/neo/)'s usage limits and, while Members Only is on, give
   [devboxes](/servers/devboxes/).
 - When a membership runs out, the account's servers on locations it opened are moved to a location
@@ -151,6 +234,69 @@ and nothing renews by itself. Neither needs the other: the second gives everythi
   is left on a lost location; buying again before that stops the moves. The owner is notified
   ("Premium has ended"), and burst cores drop to what is left. See
   [moving servers](/servers/moving-servers/).
+
+### Auto-renew
+
+Each membership has a **Renew automatically** switch on its card of the Membership page while it
+runs. It is off until its member turns it on.
+
+- In the last 10 minutes before the membership ends (or within an hour after, when the panel could
+  not run then), it is bought again at its price then (a sale included), so it never lapses. It is paid with tokens; the second membership is paid with credits
+  only when it is sold for credits and not for tokens. The token history says "Premium (30 days),
+  renewed automatically".
+- When the balance is short, it is tried once per end: the member gets "Couldn't renew …" with how
+  much was missing, and the membership ends as usual. Turning the switch off and on again tries
+  once more.
+- A suspended account is not charged.
+- With **Auto-Renew** off in the settings, the switches are hidden and nothing renews; the members'
+  choices are kept.
+
+### Ends-soon notices
+
+**Hours Before the End** (48) before a membership ends, the member gets one notification per end:
+the date, whether it renews by itself and whether the balance covers it, with **Renew**, which opens
+the Membership page. The first membership is not mentioned while the second runs past its end. Paid
+[panel access](#panel-access) gets the same notice, with a link to Account › Panel Access, except
+for admins, suspended accounts and accounts whose membership runs past the end.
+
+### Gifts
+
+**Gift to a friend**, under the plans on the Membership page, buys a membership for another account:
+its username or email (exactly, case aside) and the membership with its term ("Plus · 30 days · 15
+tokens").
+
+- The buyer pays the membership's price in tokens (the sale's price while a sale covers the
+  memberships), after a confirmation. Only memberships are given, never tokens.
+- The friend's membership is extended as after a purchase, and they get the notification "{user}
+  gave you Plus". Both token histories show the gift.
+- Gifts go only to an existing account that is not suspended and not the buyer's own.
+- **Gifts per Day** (10) limits each buyer over the last 24 hours; the page says how many are left
+  today.
+- Activity: `account:membership.gift` for the buyer, `account:membership.gifted` for the friend.
+
+### Included with the second membership
+
+The second membership can include a membership on another panel, and that panel's second
+membership can include the first one here. plugged.host pairs it with switched.cloud: Premium here
+includes switched.cloud Plus, and switched.cloud Premium includes Plus here. Both panels know an
+account by its noprofit.space account, so this needs [noprofit.space](/accounts/noprofit/)
+connected; it is off until set up with the other panel's address and a shared secret.
+
+- Within a minute of every change to the second membership of an account linked to noprofit.space
+  (bought, given, renewed, set or ended by an admin), the panel sends its end to the other panel,
+  and once a day every one that runs. A send that fails is tried again the next minute.
+- While it runs, the Membership page lists "switched.cloud Plus included" (the **Name** setting)
+  under the second membership.
+- The other way round, an account whose membership on the other panel includes it gets the first
+  membership here until that end, with everything the first membership gives. The Membership page
+  says "Plus is included with your switched.cloud Premium until …", and Admin › Users › a user ›
+  Economy shows it read-only. An account that has not signed in here yet gets it within a minute of
+  its first sign-in. While it runs past the end of a first membership bought here, that one gets no
+  ends-soon notice and does not renew by itself.
+- When it ends, it ends like the first membership: servers leave the `plus` locations unless a
+  membership bought here still runs.
+- Turned off on either side, nothing more is sent or taken: what was given runs until the last end
+  received.
 
 ### Burst cores
 
@@ -174,23 +320,33 @@ pay.
 
 An account that has to pay can still use its account pages (profile, settings, tokens and earning,
 balance, memberships, panel access, logout). Every server page and server API call sends it to
-Account › Panel Access until it pays.
+Account › Panel Access until it pays. While Offers Where a Limit Is Felt is on
+([ads](/economy/ads/#offers-where-a-limit-is-felt)), that page also says both memberships include
+the panel, with a link to the first. Before paid access ends, the account gets an
+[ends-soon notice](#ends-soon-notices).
 
 ### The sidebar card
 
 Over the sidebar's footer, a card shows one row per limited resource of the account (used and
 limit, red at the limit) and a row with the tokens and credits. Usage and credits lead to the
-Resource Store, tokens to the Tokens page.
+Resource Store, tokens to the Tokens page; the tokens show a small dot while today's
+[streak](#daily-streak) tokens wait. Under them, a line counts the tokens toward the cheapest
+membership bought with tokens that the account does not have ("9 / 15 to Plus", over a thin bar;
+"Enough for Plus" once the balance covers it), linking to the Membership page. Members of the
+second membership see no such line.
 
 ### Admins
 
 Admin › Users › a user › Economy shows the user's credits, tokens, what was earned, both
-memberships, what the store sold and both histories. Add or take away credits and tokens with a
-reason the user sees, and set the end of either membership or end it now. A deduction may not take
-a balance below zero.
+memberships (and whether each renews automatically), a membership included from the other panel,
+who brought the account and how many friends it brought, what the store sold and both histories.
+Add or take away credits and tokens with a reason the user sees, and set the end of either
+membership or end it now. A deduction may not take a balance below zero.
 
 Activity: `account:store.purchase`, `account:membership.plus`, `account:membership.plusplus`,
-`account:tokens.earn` for the user, `user:economy` for the admin.
+`account:membership.auto-renew`, `account:membership.gift`, `account:membership.gifted`,
+`account:tokens.earn`, `account:tokens.streak`, `account:tokens.task`, `account:badge.purchase` for
+the user, `user:economy` for the admin.
 
 ## Requirements
 
@@ -223,6 +379,15 @@ Activity: `account:store.purchase`, `account:membership.plus`, `account:membersh
 1. Admin › Locations: set **Tier** to `plus` or `premium` on the locations the memberships open.
 2. Admin › Settings › Economy › Memberships: turn on **Memberships**, name them, and set their
    prices, days and burst cores. Save.
+
+**The included membership** (only with noprofit.space connected on both panels):
+
+1. Admin › Settings › Economy › Memberships › Included With the Second Membership: turn on
+   **Include a Membership on Another Panel**, check **Panel URL**, **Name** and **Their Second
+   Membership's Name**, and enter a **Shared Secret** of at least 32 characters. Save.
+2. Set up the other panel with the same secret and this panel's address.
+3. Give a linked test account the second membership in Admin › Users › a user › Economy: within a
+   minute the other panel shows the included membership.
 
 ### Set up the token providers
 
@@ -297,7 +462,9 @@ Panel access is on by default. Decide before users arrive:
 
 ## Settings
 
-Admin › Settings › Economy has three tabs for the economy. A tab saves only its own fields.
+Admin › Settings › Economy has three tabs for the economy; Server Upgrades and Partners have their
+own pages ([server upgrades](/servers/server-upgrades/), [partners](/economy/partners/)). A tab saves
+only its own fields.
 
 ### Resource Store
 
@@ -310,8 +477,9 @@ Admin › Settings › Economy has three tabs for the economy. A tab saves only 
 
 | Setting | Default | What it does |
 |---|---|---|
-| Discount (%) | 0 | Taken off every store price while the sale runs. 0 turns it off. Up to 100 |
-| Name | empty | What the store calls the sale. Empty: Sale. Up to 64 characters |
+| Discount (%) | 0 | Taken off every price the sale covers while it runs. 0 turns it off. Up to 100 |
+| Covers | The Resource Store | The Resource Store, the memberships, or both. Memberships: purchases, gifts and automatic renewals |
+| Name | empty | What the store and the Membership page call the sale. Empty: Sale. Up to 64 characters |
 | Starts | empty | In your browser's time zone. Empty: right away |
 | Ends | empty | Shown in the store. Empty: until the discount is set back to 0. Must be after Starts |
 
@@ -351,6 +519,13 @@ Admin › Settings › Economy has three tabs for the economy. A tab saves only 
 | Tokens per Month | 5 | What one payment costs. 0 makes the panel free |
 | Days per Payment | 30 | How long one payment lasts. 1 to 3650 |
 
+**Profile Badges**
+
+| Setting | Default | What it does |
+|---|---|---|
+| Sell Profile Badges | on | Users buy preset badges on their account page, for good. Bought badges stay shown when this is off |
+| Tokens per Badge | 5 | What one badge costs. 1 to 100000 |
+
 **Earning Tokens**
 
 | Setting | Default | What it does |
@@ -369,6 +544,39 @@ Admin › Settings › Economy has three tabs for the economy. A tab saves only 
 | Tokens per Link | 1 | Per link provider. Up to 2 decimals, 0.01 to 1000 |
 | Links per Day | 5 | Per link provider and account. 0 has no limit. Up to 1000 |
 | Shortest Trip (Seconds) | 10 | Shorteners only: a trip back faster than this does not count. 0 to 600 |
+
+**Daily Streak**
+
+| Setting | Default | What it does |
+|---|---|---|
+| Daily Streak | on | The streak's claim button on the Tokens page |
+| Tokens per Day | `0.25,0.25,0.5,0.5,0.75,0.75,1` | What days 1, 2, 3 … of a streak pay, comma separated, up to 2 decimals (1 to 14 values, 0.01 to 100 each). The last one repeats |
+
+**Double Tokens**
+
+| Setting | Default | What it does |
+|---|---|---|
+| Bonus | 0 | Percent more on every sponsored link and survey while it runs: 100 doubles them, 0 is off. Up to 1000 |
+| Name | empty | What the Tokens page calls it, such as "Halloween weekend". Empty: a plain bonus |
+| Starts | empty | In your browser's time zone. Empty: right away |
+| Ends | empty | Empty: until the bonus is set back to 0 |
+
+**Getting Started**
+
+| Setting | Default | What it does |
+|---|---|---|
+| First-Week Tasks | on | The task list on the Tokens page for new accounts |
+| Days Shown | 14 | Days after sign-up the list is shown. 0 hides it. Up to 365 |
+| Tokens per Task | 1 | What each task pays, once. 1 to 1000 |
+
+**Referrals**
+
+| Setting | Default | What it does |
+|---|---|---|
+| Referrals | on | Every account gets a referral link |
+| Tokens per Friend | 5 | What the referrer gets per friend. 1 to 10000 |
+| Friend Earns | 10 | Tokens the friend earns before the referrer is paid. 1 to 100000 |
+| Paid per Month | 10 | Friends paid per account in any 30 days. 0 has no limit. Up to 1000 |
 
 A stored key, token or Secure Hash shows "Stored. Leave empty to keep it."; type a new one to
 replace it. With CPX Research on, the tab also shows its **Postback URL** (click to copy) and what
@@ -390,6 +598,26 @@ to set in CPX's Reward Settings.
 | First Membership: Burst Cores | 1 | CPU above each server's limit, 100 % per core. 0 to 16 |
 | Second Membership: Burst Cores | 2 | The total while it runs, not added to the first's. 0 to 16 |
 
+**Renewals and Gifts**
+
+| Setting | Default | What it does |
+|---|---|---|
+| Ends-Soon Notice | on | A notification before a membership or paid panel access ends |
+| Hours Before the End | 48 | When it is sent. 1 to 720 |
+| Auto-Renew | on | Members may have a membership renew by itself as it ends. Each membership's switch is off until its member turns it on |
+| Gifts | on | Accounts may buy a membership for another account with tokens |
+| Gifts per Day | 10 | Per buyer, over the last 24 hours. 1 to 1000 |
+
+**Included With the Second Membership**
+
+| Setting | Default | What it does |
+|---|---|---|
+| Include a Membership on Another Panel | off | The other panel's membership comes with the second membership here, and the other way round. Needs noprofit.space |
+| Panel URL | `https://panel.switched.cloud` | Where the other panel is, starting with `https://` |
+| Name | switched.cloud Plus | What the Membership page lists under the second membership |
+| Their Second Membership's Name | switched.cloud Premium | The other panel's membership that includes the first membership here |
+| Shared Secret | empty | At least 32 characters, the same on the other panel. Stored encrypted |
+
 ## Permissions
 
 Account permissions (API key scopes):
@@ -397,8 +625,8 @@ Account permissions (API key scopes):
 | Permission | Allows |
 |---|---|
 | `economy.read` | Viewing the account's credits, tokens, memberships and their history |
-| `economy.purchase` | Spending credits and tokens on resources, memberships and panel access |
-| `economy.earn` | Earning tokens through surveys and sponsored links |
+| `economy.purchase` | Spending credits and tokens on resources, memberships (gifts and auto-renew included), panel access, the day pass and profile badges |
+| `economy.earn` | Earning tokens through surveys and sponsored links, and claiming the daily streak and first-week tasks |
 
 Admin role permission:
 
@@ -410,7 +638,9 @@ Admin role permission:
 
 | Task | Runs | Does |
 |---|---|---|
-| `settle_memberships` | every minute | Moves the servers of a lapsed membership off the locations it opened, and brings every account's burst cores in line with its memberships and the settings |
+| `settle_memberships` | every minute | Renews memberships set to renew automatically, sends the ends-soon notices, moves the servers of a lapsed membership off the locations it opened, and brings every account's burst cores in line with its memberships and the settings |
+| `pay_referrals` | every minute | Pays the referrers of friends who earned Friend Earns tokens |
+| `sync_membership_bundle` | every minute | Sends the other panel the second membership's ends that changed, and applies included memberships waiting for an account's first sign-in. Does nothing until it is set up |
 
 Background tasks run only on the panel instance with `APP_PRIMARY=true`.
 
@@ -438,6 +668,10 @@ or set up a link provider or Daily Tokens, before users sign in.
   to the defaults above (the old values priced a one-off purchase), renames a second membership
   still called PlusPlus to Premium, and turns Spare Members off in [limbo](/starts/limbo/). Check
   Admin › Settings › Economy › Memberships afterwards.
+- 3.0.5 adds the daily streak, the first-week tasks, referrals, profile badges, ends-soon notices,
+  the auto-renew switches, gifts and [server upgrades](/servers/server-upgrades/), all on by default
+  once tokens and memberships are. Double tokens and the included membership stay off until you set
+  them. Check the Tokens, Memberships and Server Upgrades tabs after upgrading.
 - With [noprofit.space](/accounts/noprofit/) connected, credits are the account's noprofit.space
   credits and the Resource Store is noprofit.space's (its catalog, prices and history); Starting
   Credits and the Prices settings are not used, sales still apply. An admin's credit change is sent

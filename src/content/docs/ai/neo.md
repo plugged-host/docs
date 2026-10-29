@@ -118,7 +118,24 @@ skips everything still waiting.
   ended. The limit is checked before a turn and charged after it, so one turn may go over.
 - Memberships raise the limits by their percentages. A slot's **Daily Token Cap** limits that model
   for the whole panel per UTC day.
-- When a limit stops a turn, the chat says which one and when it resets, with **Try again**.
+- When a limit stops a turn, the chat says which one and when it resets, with **Try again**. For
+  the short and long windows it can also offer [one more day's worth](#extra-usage-for-tokens) for
+  tokens.
+
+### Extra usage for tokens
+
+When the short or long window stops the chat, the notice offers "One more day's worth for 2
+tokens" with **Get it**: it takes the tokens, then tries the turn again. With too few tokens the
+answer adds a link to Account › Tokens.
+
+- One day's worth is the long window's limit (at the account's share, which memberships raise)
+  divided by its days: 2142857 with the defaults (15000000 over 7 days).
+- It is added on top of what every running window has used at that moment, so a turn that went over
+  the limit does not eat it. The usage bars show the higher limit until the window resets.
+- It is sold while **Sell Extra Usage for Tokens** and tokens are on, only while a window refuses
+  turns, and not while noprofit.space runs neo.
+- A purchase is sent with the price the user saw: a price that changed since buys nothing.
+- The token history shows "neo: one more day"; activity `account:neo.extra`.
 
 ### What neo knows
 
@@ -127,6 +144,14 @@ allowance and plans, locations, credits, tokens and memberships, the start queue
 backups and failover, subdomains, devboxes, Minecraft and FiveM, the Discord server, and the help
 link and contacts set here. A feature that is off is never mentioned, and neo names no host,
 service or link the settings do not give. It answers in the user's language.
+
+neo also knows the user's membership (with its end) and token balance, and what else tokens buy
+while it is sold: the waiting room's day pass, a server's keep-awake pass and boost
+([server upgrades](/servers/server-upgrades/)) and one more day of neo usage. When a user asks about
+idle stops, the start queue, the waiting room, ads, limits or running out of resources, neo
+mentions the one matching option once (a membership, the Resource Store, the day pass, the
+keep-awake pass, the boost, extra neo usage) with its link, and does not push it. Tokens never turn
+into credits, so neo never offers that.
 
 ## Requirements
 
@@ -224,6 +249,8 @@ Up to 6 model slots.
 | Tokens per Short Window | 3000000 | 0: nobody can use neo |
 | Long Window (Days) | 7 | 1 to 90 |
 | Tokens per Long Window | 15000000 | 0: nobody can use neo |
+| Sell Extra Usage for Tokens | On | Once a window is used up, the chat offers one more day's worth on top of every running window, until it resets. Only while this panel meters neo and tokens are on |
+| Price of One More Day (Tokens) | 2 | Taken from the account when the user buys it in the chat (1 to 1000) |
 | Cooldown After a Failure (Seconds) | 60 | How long a model that failed is skipped (1 to 3600). A rejected key is skipped for 10 minutes |
 | Longest Wait (Seconds) | 60 | When every model is skipped for longer, neo reports an outage instead of waiting (1 to 600) |
 | Time Budget per Turn (Seconds) | 80 | The longest one answer may take, every try included (10 to 300) |
@@ -234,7 +261,7 @@ Up to 6 model slots.
 
 | Permission | Kind | What it allows |
 |---|---|---|
-| `neo.chat` | Account (API key scope) | Chatting with neo and changing its preferences |
+| `neo.chat` | Account (API key scope) | Chatting with neo and changing its preferences; with `economy.purchase`, buying extra usage |
 | `neo.access` | Server (subuser) | Using neo on this server. neo then acts with the subuser's other permissions, nothing more |
 | `settings.read` | Admin role | Seeing the slots' status |
 | `settings.update` | Admin role | Changing the settings and testing a slot |

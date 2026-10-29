@@ -93,6 +93,7 @@ export default defineConfig({
 					items: [
 						'servers/create-server',
 						'servers/server-settings',
+						'servers/server-upgrades',
 						'servers/startup-commands',
 						'servers/moving-servers',
 						'servers/allowance-cuts',

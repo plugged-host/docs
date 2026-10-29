@@ -1,13 +1,15 @@
 ---
 title: Ads
-description: Show Adsterra and Monetag ads and your own sponsored banners in the panel, an ad-funded waiting room on start, an ad-blocker notice and an in-game chat line.
+description: Show Adsterra and Monetag ads and your own sponsored banners in the panel, an ad-funded waiting room on start with a day pass, the membership popup, offers and promo clips, an ad-blocker notice and an in-game chat line.
 ---
 
 Ads pay for free servers. The panel shows Adsterra units in isolated frames, Monetag's tags, your
 own sponsored banners, an ad-funded waiting room when a user starts a server, a note for visitors
-with an ad blocker, and a chat line on running Minecraft servers. Users see the ads; admins choose
-the networks, slots and rules. Everything is off until you turn it on, and with ads on nothing shows
-until a zone, a tag or a sponsored banner exists.
+with an ad blocker, and a chat line on running Minecraft servers. Next to them it has its own
+promotions: a popup about the memberships, one-line offers where a limit stops someone, and house
+promo clips in the ad slots. Users see the ads; admins choose the networks, slots and rules. Ads are
+off until you turn them on. With ads on and no zone, tag or sponsored banner yet, only the promo
+clips show (Admin › Settings › Ads › Promotions turns them off).
 
 ## What it does
 
@@ -41,6 +43,9 @@ page to page.
 The Server Pages Strip and the Page Rectangles together fill at most **Units per Page** units per
 page; the top, the foot and the waiting rooms do not count. The top and foot slots are not shown on
 the waiting pages or on a parked server's page. A slot that gets nothing takes no room.
+
+The house [promo clips](#promo-clips) take turns with the other units in the waiting rooms' slots
+and the page rectangles, never in the strip, the top or the foot.
 
 ### Isolation
 
@@ -105,20 +110,87 @@ the room only holds the user on a page of ads while the server comes up. A start
 when the room and ads are on, and none of these hold:
 
 - the user is an admin, or sees no ads;
+- the user has a running [day pass](#day-pass);
 - the server is suspended or busy (installing, restoring, moving);
 - the server is under every line: its CPU limit, memory and disk at most CPU Line, Memory Line and
   Disk Line (a line of 0, or an unlimited resource, always counts as over);
 - the same user left a room for this server less than Free Pass minutes ago;
 - it is a Start on a server that is not offline, or Wings does not answer;
-- there is nothing to show: no zone, native unit, page script or live sponsored banner.
+- there is nothing to show: no zone, native unit, page script or live sponsored banner (the promo
+  clips alone do not open the room).
 
 The page ("These ads are paying for your server") counts down to Longest Stay and lets the user
 through once the server runs and Shortest Stay has passed, or at Longest Stay whatever the server
-does. It has no buttons: there is no way to buy past the room. While it counts down, the browser
-asks before a reload or close. A start that did not reach Wings on the click is sent again when the
-user leaves.
+does. Under the countdown it offers the [day pass](#day-pass), then the room's ads. While it counts
+down, the browser asks before a reload or close. A start that did not reach Wings on the click is
+sent again when the user leaves.
 
 Server activity: `server:waiting-room.open`, `server:waiting-room.release` (with the time waited).
+
+### Day pass
+
+The waiting room sells the way past it. A day pass costs **Day Pass Price** tokens (1) and lets
+every start of the account skip the waiting room, on all its servers, for **Day Pass Length** hours
+(24). The start queue still applies.
+
+- Under the countdown, a "Skip the wait" card shows the user's tokens and **Skip the wait for 24
+  hours · 1 token**. With too few tokens the button is **Earn tokens**, which opens Account › Tokens
+  in a new tab.
+- While memberships are on with Fewer Ads for Members, users without the second membership also
+  see that it skips the room, with a link to the membership page in a new tab.
+- Buying lets the user through at once. A pass bought while one runs adds to what is left; while a
+  pass runs, the card says until when.
+- It is sold while ads, the waiting room, Sell a Day Pass and tokens are on. A purchase is sent
+  with the price the user saw: a price that changed since buys nothing.
+- The token history shows "Waiting room day pass"; user activity `account:day-pass`.
+
+### The membership popup
+
+A card for users without a membership who see every ad: the membership closest to their tokens, its
+perks and how far they are.
+
+- It offers the dearest membership the user's tokens already buy, else the cheapest one sold for
+  tokens, at today's price (with a [membership sale](/economy/credits-and-tokens/#sales), the full
+  price struck through).
+- It lists only perks that are on (the membership's locations, priority in the start queue, burst
+  cores, fewer ads, the panel included, more neo usage, faster backups), then a bar ("9 of 15") or
+  "You have enough", with **Get Plus** (the membership's name), which opens the membership page, and
+  **Not now**.
+- At most once per **Hours Between Popups** (24) per account, on any device. Never on the account's
+  first day, for admins or suspended accounts, on the membership or tokens pages, the start queue or
+  the waiting room, or while the [welcome tour](/accounts/welcome-tour/) runs.
+- It rises from the window's corner above the **Ask neo** button; on phones it is a sheet along the
+  foot. With reduced motion turned on in the browser, it simply appears.
+- It needs ads, memberships and tokens on.
+
+### Offers where a limit is felt
+
+While **Offers Where a Limit Is Felt** is on, three pages add one line with a link, only for users
+who do not have what it offers:
+
+| Where | When | Says |
+|---|---|---|
+| The [start queue](/starts/start-queue/) | memberships on, the user lacks the second membership | The second membership goes first in this line, with a link to the membership page |
+| [Create Server](/servers/create-server/) | credits on, the allowance stops the deploy (not the server limit) | "Get more in the Resource Store" beside the reason |
+| Account › Panel Access | memberships on, the user has to pay | Both memberships include the panel, with a link to the first one |
+
+Idle stops, parked servers and per-server limits offer [server upgrades](/servers/server-upgrades/)
+instead. No offer suggests turning tokens into credits: they never convert.
+
+### Promo clips
+
+The panel ships three short house clips (get the second membership, get the first one, earn tokens).
+While **Promo Clips in the Ad Slots** is on, they are one more unit in the rotation, to the same
+users as every other ad:
+
+- In a waiting room slot (the start waiting room and the start queue page) a clip plays as a muted,
+  looping video with its button over its foot; in a page rectangle (300×250) its poster shows as a
+  banner. The strip, the top and the foot never get one.
+- A slot shows a clip instead of its unit **Share of the Slots** percent of the time (25), and a slot
+  with nothing else to show gets one. Each clip shows at most once per page.
+- The first membership's clip never goes to its members, and a clip whose page (memberships, tokens)
+  is off never shows. A clip that does not load folds away. Links open in a new tab.
+- The buttons are in the reader's language.
 
 ### Ad blockers
 
@@ -156,6 +228,8 @@ server is hosted on" and the panel's name.
   Notifications and MultiTag need a service worker at the site root and are not supported.
 - **Sponsored banners** (optional): no outside account, only the images.
 - Memberships, if members should see fewer ads (Admin › Settings › Economy › Memberships).
+- Tokens (Admin › Settings › Economy › Tokens) for the day pass, and tokens with memberships for the
+  membership popup.
 - A Minecraft egg with the `eula` feature for in-game messages ([eggs](/nodes/eggs/)).
 
 ## Setup
@@ -170,7 +244,7 @@ server is hosted on" and the panel's name.
    Verification** code if Monetag asks you to verify the site. Save.
 3. Optional: Admin › Sponsored Banners › Create, then upload the image.
 4. Admin › Settings › Ads › Placement: turn on **Show Ads**, choose the pages and slots, and save.
-5. Optional: Admin › Settings › Ads › Waiting Room, Ad Blockers and In-Game.
+5. Optional: Admin › Settings › Ads › Waiting Room, Ad Blockers, In-Game and Promotions.
 6. Open the server list as a user: a 300×250 zone shows in the page and a leaderboard zone at
    the foot, if you created those sizes. A zone that never fills folds away after a few seconds; if
    all of them do, try **Ad Frame Address**.
@@ -249,6 +323,14 @@ Monetag never loads on the console or in the waiting rooms.
 | Longest Stay (Seconds) | 30 | After this the room lets the user through however far the server is. 1 to 600 |
 | Free Pass (Minutes) | 10 | The same user's starts of that server within this time skip the room. 0 to 1440 |
 
+**Day Pass**
+
+| Setting | Default | What it does |
+|---|---|---|
+| Sell a Day Pass | on | The room offers "Skip the wait" for tokens: the user's starts skip every room, on all their servers, for a while |
+| Day Pass Price (Tokens) | 1 | What one pass costs. 1 to 1000 |
+| Day Pass Length (Hours) | 24 | How long one pass lets starts skip the room. 1 to 720 |
+
 **What the Rooms Show** (the start queue page shows the same):
 
 | Setting | Default | What it does |
@@ -279,6 +361,16 @@ Monetag never loads on the console or in the waiting rooms.
 | Message | empty | One line, up to 200 characters. Empty: "This server is hosted on" and the panel's name |
 | Every (Minutes) | 60 | How often each server gets it. 5 to 1440 |
 
+### Promotions
+
+| Setting | Default | What it does |
+|---|---|---|
+| Membership Popup | on | The [membership popup](#the-membership-popup) for users without a membership who see ads. Needs memberships and tokens on |
+| Hours Between Popups | 24 | A user sees it at most once in this time, on any device. 1 to 720 |
+| Offers Where a Limit Is Felt | on | The [one-line offers](#offers-where-a-limit-is-felt) on the start queue, Create Server and Panel Access |
+| Promo Clips in the Ad Slots | on | The [promo clips](#promo-clips) take turns with the other units |
+| Share of the Slots (%) | 25 | How often a slot shows a clip instead of its unit; a slot with nothing else shows one too. 0: never. Up to 100 |
+
 ## Permissions
 
 Admin role permissions for Admin › Sponsored Banners:
@@ -307,3 +399,5 @@ Background tasks run only on the panel instance with `APP_PRIMARY=true`.
 - The waiting room never delays a server: the start goes to Wings on the click. Its cost to the
   user is Shortest Stay to Longest Stay seconds of ads per start, less with Free Pass.
 - With memberships off, everybody sees all ads and Fewer Ads for Members does nothing.
+- The promotions are on by default. The popup and the clips go only to users who see ads, so they
+  show nothing while Show Ads is off; the offers show whether ads are on or not.

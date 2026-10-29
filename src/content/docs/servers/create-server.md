@@ -32,7 +32,11 @@ on; until then only admins create servers, from Admin › Servers.
   locations are asked again for the chosen size half a second after it changes.
 - **EULA**: for games whose egg has the `eula` feature, ticked by default.
 - **Deploy server**: says why the server cannot be deployed yet (allowance or server limit, game,
-  location, name, EULA). Ctrl/Cmd+S deploys too. The new server opens on its console.
+  location, name, EULA). When the allowance is what stops it (a resource used up, or the size over
+  what is left; not the server limit) and credits are on, a link "Get more in the Resource Store"
+  sits beside the reason, while Admin › Settings › Ads › Promotions › Offers Where a Limit Is Felt
+  is on ([ads](/economy/ads/#offers-where-a-limit-is-felt)). Ctrl/Cmd+S deploys too. The new server
+  opens on its console.
 
 ### Plans
 

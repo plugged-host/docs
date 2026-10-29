@@ -67,6 +67,11 @@ old name.
   the subdomain and refunded when it is deleted: by the user, by an admin, with its domain, or with
   the server. Changing the prices later does not change refunds of existing subdomains. See
   [Credits and tokens](/economy/credits-and-tokens/).
+- **Short names** take a bigger deposit while Admin › Settings › Economy › Server Upgrades › Bigger
+  Deposit for Short Names is on: at least 15 tokens for a name of 3 characters and 30 for 2, or the
+  usual deposit when that is higher. The create form's deposit follows the name as it is typed, so
+  the price shows before Create. A rename to a short name that needs a bigger deposit than the
+  subdomain has is refused: add it as a new subdomain. See [Server upgrades](/servers/server-upgrades/#short-subdomain-names).
 - A subuser with `subdomains.create` spends the owner's tokens. Only the owner sees the balance.
 - Names are 2 to 63 lowercase letters, digits and hyphens, not starting or ending with a hyphen.
   Each name is unique per domain.

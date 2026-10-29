@@ -22,7 +22,10 @@ notification"). Each shows its title, how long ago it came, its text and lines o
 address, why a move failed, an error), and:
 
 - **Open server** (**View backups** for a backup), while the server still exists: marks it read and
-  opens the server (its Backups page).
+  opens the server (its Backups page). One about the account instead (a membership or panel access
+  ending, a gift) links to its page (**Renew**, **View membership**), and one about a server upgrade
+  to the server's Settings › Upgrades (**Add time**, **Keep it awake**); each marks it read the same
+  way.
 - **Mark as read**, while it is unread.
 - The **×** at its top, which deletes it.
 
@@ -39,6 +42,13 @@ notifications is not written to the activity log.
 | Move failed: {server} | Every admin, and every user whose role has `servers.transfer` | Any move gave up, with the reason or the error |
 | Your servers have fewer resources now | The account | An [allowance cut](/servers/allowance-cuts/) took CPU, memory or disk off its servers: each server with what it gave |
 | {membership} has ended | The account | A membership ran out and servers on locations it opened are moving ([Credits and tokens](/economy/credits-and-tokens/)) |
+| {membership} ends soon | The account, once per end | A membership ends within Hours Before the End (48): the date, whether it renews by itself and whether the balance covers it; **Renew** opens the membership page ([ends-soon notices](/economy/credits-and-tokens/#ends-soon-notices)) |
+| Couldn't renew {membership} | The account, once per end | A membership set to [renew automatically](/economy/credits-and-tokens/#auto-renew) could not: how much was missing |
+| {user} gave you {membership} | The recipient | Someone [gave them a membership](/economy/credits-and-tokens/#gifts): who, which, how many days and the new end; **View membership** |
+| Panel access ends soon | The account, once per end | Paid [panel access](/economy/credits-and-tokens/#panel-access) ends within Hours Before the End: the date and whether the balance covers the next payment; **Renew** opens Account › Panel Access |
+| Referral reward | The referrer | A friend who signed up with their [referral link](/economy/credits-and-tokens/#referrals) earned their first tokens: the tokens paid |
+| {upgrade} ends soon | Whoever bought it; the owner once the buyer has no access to the server | A keep-awake pass or an extra port, database or backup slot ends within 48 hours, once per end date, with what adding time costs and **Add time** ([server upgrades](/servers/server-upgrades/)) |
+| Server stopped while idle | The owner | [Limbo](/starts/limbo/) stopped the server for being idle: how long, when it will be parked and, while one is sold, what a keep-awake pass costs, with **Keep it awake** |
 | Server recovered / Server moved to another node | The owner | A [failover](/nodes/failover/) or a drill restored the server on another node: the new address and the time of the backup used |
 | Server node issue | The owner, at most once a day per server, and only when the server had already left its node | A failover failed |
 | Modpack installed / Modpack installation failed | Whoever started it (on the Modpacks page or through neo) | A modpack install ended ([Minecraft](/games/minecraft/)) |

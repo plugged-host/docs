@@ -1,14 +1,16 @@
 ---
 title: rux
-description: Set up rux, the Discord moderation bot that takes orders in plain words, runs giveaways of credits and checks members' messages for spam and broken rules.
+description: Set up rux, the Discord moderation bot that takes orders in plain words, runs giveaways of credits, tokens or membership days, answers /tokens and checks members' messages for spam and broken rules.
 ---
 
 rux is the panel's moderation and toolbox bot on Discord. Admins tell it what to do in plain words,
 by DM, by @mentioning it or with "hey rux": warn, time out or ban someone, run a giveaway of
-credits, set a standing rule, watch a channel. Members of the roles admins make rux moderator
-roles can have it moderate their server. rux also checks members' messages by itself: spam without
-AI, and watched channels and standing rules with the AI. Admins set it up in Admin › Settings ›
-Accounts › rux; Discord members only see what it posts.
+credits, tokens or membership days, set a standing rule, watch a channel. Members of the roles
+admins make rux moderator roles can have it moderate their server. rux also checks members'
+messages by itself: spam without AI, and watched channels and standing rules with the AI. Members
+ask it `/tokens` for their tokens, streak and membership, and it announces double-token windows.
+Admins set it up in Admin › Settings › Accounts › rux; Discord members only see what it posts and
+answers.
 
 > hey rux, make a giveaway of 500 credits for 2 winners that ends Friday at 18:00
 
@@ -85,23 +87,30 @@ giveaways.
 
 ### Giveaways
 
-- The prize is always credits. A title can name the occasion but never promise anything else
-  (memberships, tokens, resources, Nitro, roles); such a giveaway is refused.
+- The prize is credits (the default), tokens, or days of either membership. A title can name the
+  occasion or its own prize ("Plus" on days of the first membership, "tokens" on tokens) but never
+  promise anything else (resources, Nitro, roles, the other membership); such a giveaway is
+  refused. Without a title it is the prize: "500 credits", "15 tokens", "30 days of Plus" (the
+  memberships' names come from the economy settings).
 - The post has an **Enter** button. Entering needs a linked Discord account; someone who is not
   linked gets a **Link** button. Someone already in can leave.
 - An admin can keep out the winners of the last 0 to 10 giveaways.
-- Limits: **Most Credits per Winner**, **Most Winners per Giveaway**, **Longest Giveaway**; it ends
-  at least a minute from now. A giveaway is refused while nothing can pay it (credits off).
+- Limits: **Most Credits per Winner**, **Most Tokens per Winner**, **Most Membership Days per
+  Winner**, **Most Winners per Giveaway**, **Longest Giveaway**; it ends at least a minute from now.
+  A giveaway is refused while nothing can pay it: credits off for credits, tokens off for tokens,
+  memberships off for membership days.
 - At the end, winners are drawn at random among the entries that are still linked and still in the
   server, and pinged in the channel. Reroll draws more winners the same way.
-- Each winner's credits go into their balance once. A winner who unlinked waits until they link
-  again; waiting payouts are retried for 90 days.
+- Each winner's prize is paid once: credits and tokens into their balance (the token history says
+  "Giveaway on Discord: 15 tokens"), membership days added to what is left of the membership, like a
+  purchase. A winner who unlinked, or has no panel account yet, waits until they link; waiting
+  payouts are retried for 90 days. The announcement says where the prize went.
 
 ### Credit gifts
 
 Only the Discord accounts in **Main Admin (Gives Credits)** can have rux give someone credits, at
 most **Most Credits per Gift** at once. A retried order gives nothing twice. Gifts and giveaways are
-the only things rux gives.
+the only things rux gives: a gift only credits, a giveaway credits, tokens or membership days.
 
 ### Standing rules
 
@@ -139,6 +148,21 @@ Every caught message is deleted and the member is warned at most once per Rule C
 at least) per server; within the cooldown the spam is only deleted. The warning is a case, counts
 towards the warning ladder and is said in the channel.
 
+### Tokens
+
+- **`/tokens`** is a slash command rux registers on the Discord integration's server. It answers
+  only the member who asked: for a Discord account linked to an account, the token balance, today's
+  [daily streak](/economy/credits-and-tokens/#daily-streak) (ready to claim, or claimed) while the
+  streak is on, the membership that runs and when it ends while memberships are on, and a button to
+  Account › Tokens. An unlinked member is told how to link. With tokens off, or `/tokens` switched
+  off, it says so.
+- **Double-token posts**: when a [double-token window](/economy/credits-and-tokens/#double-tokens)
+  starts, rux posts it once in the **Announcement Channel ID**, with its name, how much more links
+  and surveys pay, its end and a link to the Tokens page, in rux's language. A restart does not post
+  it again; a changed bonus, start or end posts anew, a new name alone does not. A post Discord
+  refused is tried again an hour later. Nothing is posted while Announce Double Tokens is off, no
+  channel is set or tokens are off.
+
 ### More than one server
 
 rux works on the main server and up to nine more, with one bot. Each server has its own rules,
@@ -157,7 +181,8 @@ the Main Admin list and credits are the same everywhere. Removing a server stops
 - At least one AI model in Admin › Settings › AI › neo ([neo](/ai/neo/#setup)). rux calls neo's
   models directly: neo does not have to be switched on, and no neo limits apply. For watched
   channels and standing rules, at least one model must be open to everyone.
-- Credits on (Admin › Settings › Economy) for giveaways and gifts.
+- Credits on (Admin › Settings › Economy) for credit giveaways and gifts; tokens on for token
+  giveaways and `/tokens`; memberships on for giveaways of membership days.
 
 ## Setup
 
@@ -212,6 +237,16 @@ Mode in Discord (User Settings › Advanced) and right-click › Copy ID.
 | Main Admin (Gives Credits) | Empty | Up to 20 Discord user ids that may have rux give credits. Empty turns gifts off |
 | Most Credits per Gift | 10000 | 1 to 1000000 |
 
+### Tokens and Memberships
+
+| Setting | Default | What it does |
+|---|---|---|
+| `/tokens` | On | Members whose Discord is linked to an account see their tokens, today's streak and their membership, only for them |
+| Most Tokens per Winner | 50 | For giveaways of tokens. 1 to 100000 |
+| Most Membership Days per Winner | 30 | For giveaways of days of a membership. 1 to 365 |
+| Announcement Channel ID | Empty | On the main server. rux announces double-token windows here; empty: no announcements |
+| Announce Double Tokens | On | Posts once when a double-token window starts |
+
 ### More Discord Servers
 
 Up to nine, each with:
@@ -254,7 +289,7 @@ Runs on the instance with `APP_PRIMARY=true` only.
 
 | Task | When | What it does |
 |---|---|---|
-| `rux` | Every 10 seconds | Draws due giveaways and lifts timed bans; once a minute restarts orders that lost their worker; once a day deletes rux's stored messages older than 30 days |
+| `rux` | Every 10 seconds | Draws due giveaways and lifts timed bans; once a minute restarts orders that lost their worker and posts a double-token window that started; once a day deletes rux's stored messages older than 30 days |
 
 ## Notes
 
@@ -267,6 +302,8 @@ Runs on the instance with `APP_PRIMARY=true` only.
 - rux keeps every order, its answers and the tools' output for 30 days, so the next order of a
   conversation remembers it.
 - Member text reaches the AI marked as untrusted data, so a message cannot give rux orders.
-- With noprofit.space connected, rux's admins are noprofit.space's admins, giveaways and gifts are
-  paid to noprofit.space balances, rux can take its models from noprofit.space, and its settings can
-  be kept there (then shown read-only on this page). See [noprofit.space](/accounts/noprofit/).
+- With noprofit.space connected, rux's admins are noprofit.space's admins, credit giveaways and
+  gifts are paid to noprofit.space balances, rux can take its models from noprofit.space, and its
+  settings can be kept there (then shown read-only on this page). Tokens and memberships are always
+  the panel's own: token and membership giveaways are paid by the panel, and the Tokens and
+  Memberships settings stay editable here. See [noprofit.space](/accounts/noprofit/).

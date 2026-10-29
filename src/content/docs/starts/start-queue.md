@@ -65,7 +65,11 @@ Users see, top to bottom:
   again".
 - The waiting rooms' ads, when [ads](/economy/ads/) are on.
 - For users without a membership, while memberships are on: an offer for the first membership and
-  its price. The second membership is never offered here.
+  its price ("ahead of everyone without it"), leading to the membership page. Members see what they
+  have instead. While Admin › Settings › Ads › Promotions › Offers Where a Limit Is Felt is on, one
+  line under the offer, and under a first-membership member's note, says the second membership goes
+  first in this line, with a link to the membership page; members of the second see none
+  ([ads](/economy/ads/#offers-where-a-limit-is-felt)).
 - **Move to a quieter node**, when Offer a Move is on (see below).
 - "Cancel and go back": leaves the line and returns to the console. The server stays off.
 

@@ -28,11 +28,12 @@ The `settle_limbo` task runs once a minute while limbo is on and looks at server
   Members is off by default: members' idle servers are stopped, parked and deleted like
   everyone's);
 - not a [devbox](/servers/devboxes/)'s own server;
-- not parked already, and not failed to park in the last day.
+- not parked already, and not failed to park in the last day;
+- not kept awake: a [keep-awake pass](#keep-awake) for the server still runs.
 
 | Idle for | Server | Limbo does |
 |---|---|---|
-| Stop After (2880 minutes, two days) | running | Stops it |
+| Stop After (2880 minutes, two days) | running | Stops it and tells the owner ("Server stopped while idle": when it will be parked, and what a keep-awake pass costs while one is sold) |
 | Park After (4320 minutes, three days) | off | Parks it |
 
 A node that does not answer is skipped. At most Servers per Minute servers are stopped per run, and
@@ -83,7 +84,8 @@ The server list shows Being Parked, Parked and Being Restored instead of the usa
 
 ### Deleting parked servers
 
-With Delete After (Days) above 0, a server parked for that many days is deleted with its files. Its
+With Delete After (Days) above 0, a server parked for that many days, without a running keep-awake
+pass, is deleted with its files. Its
 backups, the final one included, go to the deleted servers' hold like any deleted server's, so the
 owner can still download the newest one until the hold ends ([backups](/servers/backups/)). The
 limbo page says when the server will be deleted, and a restore is refused once that time has
@@ -91,6 +93,18 @@ passed. A restore under way stops the clock. A suspended server is left alone: i
 [suspension](/safety/suspension/)'s deletion time is the only one it has.
 
 Deleting runs every minute, 20 servers at a time, even while limbo is off.
+
+### Keep awake
+
+A keep-awake pass ([server upgrades](/servers/server-upgrades/), 3 tokens for 7 days by default,
+sold only while limbo is on) keeps the server from being stopped, parked or deleted as idle while
+it runs. It is offered where limbo is felt:
+
+- the "Server stopped while idle" notification names its price, with **Keep it awake**, which opens
+  the server's Settings › Upgrades;
+- the console of a server limbo stopped offers it while the server is off;
+- a parked server's limbo page offers it too. There it keeps the server from being deleted, and
+  from being parked again once it is restored.
 
 ### Activity
 
@@ -113,7 +127,8 @@ Server activity: `server:limbo.stop`, `server:limbo.parking`, `server:limbo.park
   Local, Ddup-Bak, Btrfs, ZFS, Kopia and a Restic repository on a local path keep the backup on the
   node, which limbo is about to empty, so servers using them are never parked. This is the same rule
   [node failover](/nodes/failover/) uses.
-- Tokens (Admin › Settings › Economy › Tokens) for paid restores. Without them restores are free.
+- Tokens (Admin › Settings › Economy › Tokens) for paid restores and keep-awake passes. Without
+  them restores are free and no pass is sold.
 - Memberships for Spare Members.
 
 ## Setup

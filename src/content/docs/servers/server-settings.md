@@ -1,10 +1,11 @@
 ---
 title: Server settings
-description: The server's Settings page for owners and subusers, with its icon, SFTP details, resizing, software switch, behaviour, backup mails and deletion.
+description: The server's Settings page for owners and subusers, with its icon, SFTP details, resizing, upgrades, software switch, behaviour, backup mails and deletion.
 ---
 
 A server's settings are one page, **Settings**, with one section under another: Server Information,
-SFTP Information, Resources (or Limits), Version, Behaviour, Notifications and Danger Zone. Owners
+SFTP Information, Resources (or Limits), Upgrades, Version, Behaviour, Notifications and Danger
+Zone. Owners
 and subusers see the sections their permissions allow; Settings shows in the server's sidebar for
 anyone holding one of them. **Startup** and **VS Code** ([devboxes](/servers/devboxes/)) are pages
 of their own with their own sidebar rows.
@@ -19,13 +20,15 @@ of their own with their own sidebar rows.
 | SFTP Information | Always | `files.sftp` |
 | Resources | Players Resize Servers is on, or the viewer is an admin | `settings.resize` |
 | Limits | In place of Resources for whoever cannot resize | Any of Settings' permissions |
+| Upgrades | Tokens are on and an upgrade is sold or runs on the server | `settings.upgrades` |
 | Version | The server's game has two or more software choices, or it is a Minecraft server with a version variable | `settings.software` |
 | Behaviour | Always | `settings.auto-start`, `settings.timezone`, `settings.auto-kill`, `settings.trash` |
 | Notifications | Always | `backups.read` |
 | Danger Zone | Always | `settings.install` or `settings.delete` |
 
 Each section has an anchor, so `/server/<id>/settings#resources` opens the page at that section. The
-anchors are `general`, `sftp`, `resources`, `version`, `behaviour`, `notifications` and `danger`.
+anchors are `general`, `sftp`, `resources`, `upgrades`, `version`, `behaviour`, `notifications` and
+`danger`.
 
 ### Server Information
 
@@ -65,6 +68,12 @@ it, otherwise an SSH key from Account › SSH Keys. **Launch in SFTP Client** op
 - Growing also needs room on the server's node (memory and disk against the node's limits, as a
   deploy). When the node is full, the answer says to move the server first.
 - The new limits go to Wings at once and apply to the running container.
+
+### Upgrades
+
+What the viewer can buy with their own tokens for this server: a keep-awake pass, a boost, extra
+port, database and backup slots, and a card colour, each with its price, and what already runs
+with its end and **Add** time. See [Server upgrades](/servers/server-upgrades/).
 
 ### Version
 
@@ -166,6 +175,7 @@ Server permissions, for subusers. The owner has all of them.
 | `settings.rename` | Changing the name and description |
 | `settings.change-icon` | Uploading and deleting the server's icon |
 | `settings.resize` | Changing CPU, memory and disk within the owner's allowance |
+| `settings.upgrades` | Buying [server upgrades](/servers/server-upgrades/) with their own tokens |
 | `settings.software` | Switching the software or Minecraft version, which reinstalls the server |
 | `settings.timezone`, `settings.auto-start`, `settings.auto-kill`, `settings.trash` | The parts of Behaviour |
 | `settings.install` | Reinstalling, and starting a stuck install over |

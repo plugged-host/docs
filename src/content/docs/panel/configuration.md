@@ -70,8 +70,8 @@ Tabs marked "upstream" work as in Calagopus.
 | Accounts | User (upstream), [noprofit.space](/accounts/noprofit/), [Discord](/discord/integration/), [rux](/discord/rux/), Webauthn (upstream), [Welcome Tour](/accounts/welcome-tour/), [Reviews](/accounts/reviews/) |
 | Hosting | Server (upstream), [Games](/servers/create-server/), [Minecraft](/games/minecraft/), [FiveM](/games/fivem/), [Subdomains](/servers/subdomains/), [Devboxes](/servers/devboxes/), [Placement](/nodes/placement/), [Start Queue](/starts/start-queue/), [Limbo](/starts/limbo/), [Recovery](/nodes/failover/) |
 | Security | Captcha (upstream), Ratelimits (upstream), [Abuse](/safety/abuse/), Activity (upstream) |
-| Economy | [Resource Store, Tokens, Memberships](/economy/credits-and-tokens/), [Partners](/economy/partners/) |
-| Ads | [Placement, Adsterra, Monetag, Waiting Room, Ad Blockers, In-Game](/economy/ads/) |
+| Economy | [Resource Store, Tokens, Memberships](/economy/credits-and-tokens/), [Partners](/economy/partners/), [Server Upgrades](/servers/server-upgrades/) |
+| Ads | [Placement, Adsterra, Monetag, Waiting Room, Ad Blockers, In-Game, Promotions](/economy/ads/) |
 | AI | [neo](/ai/neo/), [neo on Discord](/ai/neo-discord/) |
 
 Other admin pages that hold configuration: Admin › Plans ([creating servers](/servers/create-server/)),
