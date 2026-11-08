@@ -64,10 +64,11 @@ git clone https://github.com/plugged-host/wings.git && cd wings
 cargo build --profile release-fast -p wings-rs
 ```
 
-The binary is `target/release-fast/wings-rs`. Install it as in [Wings](/nodes/wings/). A build on
-a newer distribution than your nodes can need a newer glibc than the nodes have: build on the
-oldest distribution you run (for example in a `rust:<version>-bookworm` container for Debian 12
-nodes).
+The binary is `target/release-fast/wings-rs`; install it as `/usr/local/bin/calagopus-wings` as in
+[Wings](/nodes/wings/). Its release comes from the `VERSION` file in the Wings repository
+(`WINGS_VERSION` overrides it). A build on a newer distribution than your nodes can need a newer
+glibc than the nodes have: build on the oldest distribution you run (for example in a
+`rust:<version>-bookworm` container for Debian 12 nodes).
 
 ## Working on the code
 

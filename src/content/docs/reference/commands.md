@@ -1,6 +1,6 @@
 ---
 title: Commands
-description: The panel-rs and wings-rs command-line commands, and how to run them with the panel's environment.
+description: The panel-rs and calagopus-wings command-line commands, and how to run them with the panel's environment.
 ---
 
 ## Running panel commands
@@ -45,16 +45,17 @@ script can read.
 The `import` and `extensions` groups are upstream's. The binary build does not support extensions,
 and plugged.host's features are in the source, not extensions.
 
-## wings-rs
+## calagopus-wings
 
-Always with `--config` ([Wings](/nodes/wings/)):
+The binary is the `wings-rs` Cargo package, installed as `calagopus-wings` (the name the panel's
+enrollment command uses). Always with `--config` ([Wings](/nodes/wings/)):
 
 | Command | What it does |
 |---|---|
-| `wings-rs --config <file>` | Runs Wings |
-| `wings-rs --config <file> configure --enroll <code> --panel-url <url>` | Writes the node's configuration from a one-time enrollment code |
-| `wings-rs version` | Prints the Wings version |
-| `wings-rs --config <file> diagnostics` | Collects a report for troubleshooting |
+| `calagopus-wings --config <file>` | Runs Wings |
+| `calagopus-wings --config <file> configure --enroll <code> --panel-url <url>` | Writes the node's configuration from a one-time enrollment code |
+| `calagopus-wings version` | Prints the release (`v3.1.0`), the commit and the Calagopus version it is based on |
+| `calagopus-wings --config <file> diagnostics` | Collects a report for troubleshooting |
 
 ## The panel's API
 

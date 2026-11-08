@@ -29,7 +29,7 @@ them.
 | The panel: one binary, `panel-rs`, with the web frontend built in | the panel box, behind nginx | [plugged-host/panel](https://github.com/plugged-host/panel) | [Install the panel](/panel/install/) |
 | PostgreSQL and Redis (or Valkey) | the panel box, or anywhere the panel reaches | upstream | [Database and Redis](/panel/database/) |
 | Background tasks and the Discord bots | inside the panel process (the instance with `APP_PRIMARY=true`) | the panel | [Configuration](/panel/configuration/) |
-| Wings (wings-rs), the node daemon that runs the containers | every node | [plugged-host/wings](https://github.com/plugged-host/wings) | [Wings](/nodes/wings/) |
+| Wings (calagopus-wings), the node daemon that runs the containers | every node | [plugged-host/wings](https://github.com/plugged-host/wings) | [Wings](/nodes/wings/) |
 | Status page and its outside prober (optional) | Cloudflare Workers | [plugged-host/status](https://github.com/plugged-host/status) | [Status Worker](/status/status-worker/) |
 | Website (optional) | Cloudflare Workers | [plugged-host/site](https://github.com/plugged-host/site) | [Website](/status/website/) |
 

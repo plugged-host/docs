@@ -9,7 +9,7 @@ description: How the panel, its database, its background tasks and the nodes fit
 browser ──▶ nginx ──▶ panel-rs (Axum + the built-in frontend) ──▶ PostgreSQL
                          │   └─ background tasks (APP_PRIMARY)      Redis / Valkey
                          │
-                         └──▶ Wings (wings-rs) on each node ──▶ Docker containers
+                         └──▶ Wings (calagopus-wings) on each node ──▶ Docker containers
 browser ───────────────────▶ Wings: console websocket, file uploads and downloads, SFTP
 ```
 

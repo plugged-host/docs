@@ -8,6 +8,10 @@ drives over HTTPS. plugged.host's nodes run [plugged-host/wings](https://github.
 a fork of Calagopus's [wings-rs](https://github.com/calagopus/wings) with what some of the panel's
 features need on the node.
 
+The fork is built from the `wings-rs` Cargo package but installed as `calagopus-wings`, the name the
+panel's enrollment command uses. Its releases are `v{VERSION}` (`v3.1.0`), the same number as the
+panel release it goes with; every fix is a new version.
+
 The panel also works with stock wings-rs: features that need the fork check what a node can do
 and skip a node without it. The table below says what a stock node misses.
 
@@ -38,18 +42,20 @@ itself, not to a proxy.
 
 ### 2. The binary
 
-Each [release](https://github.com/plugged-host/wings/releases) carries `wings-rs-<arch>-linux` for
-`x86_64`, `aarch64`, `riscv64` and `ppc64le`:
+Each [release](https://github.com/plugged-host/wings/releases) carries
+`calagopus-wings-<arch>-linux` for `x86_64`, `aarch64`, `riscv64` and `ppc64le`. `latest` always
+downloads the newest published release:
 
 ```bash
-release=v3.0.0   # the Wings release that goes with your panel release
-sudo curl -fL -o /usr/local/bin/wings-rs \
-  "https://github.com/plugged-host/wings/releases/download/$release/wings-rs-$(uname -m)-linux"
-sudo chmod 755 /usr/local/bin/wings-rs
+sudo curl -fL -o /usr/local/bin/calagopus-wings \
+  "https://github.com/plugged-host/wings/releases/latest/download/calagopus-wings-$(uname -m)-linux"
+sudo chmod 755 /usr/local/bin/calagopus-wings
 sudo install -d -m 700 /etc/calagopus-wings
+calagopus-wings version
 ```
 
-A Docker image is published too: `ghcr.io/plugged-host/wings:<version>`.
+To install a specific release, replace `latest/download` with `download/v3.1.0`. A Docker image is
+published too: `ghcr.io/plugged-host/wings:<version>`.
 
 ### 3. The node in the panel
 
@@ -62,14 +68,14 @@ Command**: the panel shows a command with a one-time code that expires after 30 
 Run the command on the node with the configuration path added:
 
 ```bash
-sudo wings-rs --config /etc/calagopus-wings/config.yml configure \
+sudo calagopus-wings --config /etc/calagopus-wings/config.yml configure \
   --enroll <code> --panel-url https://panel.example.com
 ```
 
 It writes the configuration file the panel generated for the node.
 
 :::caution
-Always pass `--config`. Without it, wings-rs uses the first configuration file it finds among
+Always pass `--config`. Without it, Wings uses the first configuration file it finds among
 several default paths, which on a node that ever ran another panel's Wings can be that daemon's
 file, and `configure` would overwrite it.
 :::
@@ -88,8 +94,8 @@ api:
   # The public resources endpoint; set to false to answer 404 instead.
   public_resources: true
 
-# Keep the panel from replacing this build with an upstream release.
-ignore_panel_wings_upgrades: true
+# Let the panel upgrade Wings from plugged-host/wings releases.
+ignore_panel_wings_upgrades: false
 ```
 
 Keep the rest as the panel wrote it. The other keys (Docker network, SFTP, disk limiters, backups)
@@ -97,7 +103,7 @@ are upstream's; see [Calagopus: Wings configuration](https://calagopus.com/docs/
 
 ### 6. The service
 
-`/etc/systemd/system/wings.service`:
+`/etc/systemd/system/calagopus-wings.service`:
 
 ```ini
 [Unit]
@@ -110,7 +116,7 @@ PartOf=docker.service
 User=root
 KillMode=process
 LimitNOFILE=4096
-ExecStart=/usr/local/bin/wings-rs --config /etc/calagopus-wings/config.yml
+ExecStart=/usr/local/bin/calagopus-wings --config /etc/calagopus-wings/config.yml
 Restart=on-failure
 StartLimitInterval=180
 StartLimitBurst=30
@@ -122,7 +128,7 @@ WantedBy=multi-user.target
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable --now wings
+sudo systemctl enable --now calagopus-wings
 ```
 
 Within a minute, Admin › Nodes shows the node answering and [node telemetry](/nodes/telemetry/)
@@ -131,9 +137,9 @@ has its first sample.
 ### Pairing instead of enrolling
 
 Upstream's other way works too: start Wings without a configuration file and it waits to be
-paired, printing a pairing code in its log (`journalctl -u wings`). In Admin › Nodes › Create,
-choose **Pair a Waiting Node** and enter the node's address and that code. Keep `--config` in the
-unit either way.
+paired, printing a pairing code in its log (`journalctl -u calagopus-wings`). In Admin › Nodes ›
+Create, choose **Pair a Waiting Node** and enter the node's address and that code. Keep `--config`
+in the unit either way.
 
 ## Allocations
 
@@ -143,20 +149,23 @@ name as the alias, or let the panel make them on demand inside its deployment po
 
 ## Updating
 
-Install the new binary over the old one and restart Wings. Game servers keep running while Wings
-restarts.
+Wings reports its release, `v3.1.0`, to the panel. Admin › Nodes shows it and an **Upgrade** button
+when a newer release exists; the button downloads the latest `calagopus-wings-<arch>-linux` from
+[plugged-host/wings](https://github.com/plugged-host/wings/releases) and restarts Wings. Game
+servers keep running while Wings restarts.
+
+To update by hand, `latest` always downloads the newest release:
 
 ```bash
-release=v3.0.1
-sudo curl -fL -o /usr/local/bin/wings-rs.new \
-  "https://github.com/plugged-host/wings/releases/download/$release/wings-rs-$(uname -m)-linux"
-sudo chmod 755 /usr/local/bin/wings-rs.new
-sudo mv /usr/local/bin/wings-rs.new /usr/local/bin/wings-rs
-sudo systemctl restart wings
+sudo curl -fL -o /usr/local/bin/calagopus-wings.new \
+  "https://github.com/plugged-host/wings/releases/latest/download/calagopus-wings-$(uname -m)-linux"
+sudo chmod 755 /usr/local/bin/calagopus-wings.new
+sudo mv /usr/local/bin/calagopus-wings.new /usr/local/bin/calagopus-wings
+sudo systemctl restart calagopus-wings
 ```
 
-With `ignore_panel_wings_upgrades: true` the panel never upgrades Wings by itself, so updates are
-always your decision.
+Set `ignore_panel_wings_upgrades: true` to keep the panel from applying updates, for example when a
+node is pinned to a release; the check still shows the newer version.
 
 ## Public resources
 
